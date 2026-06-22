@@ -22,7 +22,6 @@ __version_info__ = tuple(map(int, __version__.split(".")[:3]))
 try:
     from .SOLWEIGpython import (
         Solweig_run,
-        Solweig_2025a_calc_forprocessing,
         Solweig_2026a_calc_forprocessing,
         PET_calculations,
         UTCI_calculations,
@@ -30,14 +29,7 @@ try:
 except ImportError:
     pass
 
-try:
-    from .util import (
-        imageMorphometricParms_v2,
-        landCoverFractions_v2,
-        RoughnessCalcFunctionV2,
-    )
-except ImportError:
-    pass
+
 
 # Optional GPU/torch imports
 try:
@@ -63,14 +55,9 @@ __all__ = [
     "HAS_TORCH",
     # Core functions
     "Solweig_run",
-    "Solweig_2025a_calc_forprocessing",
     "Solweig_2026a_calc_forprocessing",
     "PET_calculations",
     "UTCI_calculations",
-    # Utilities
-    "imageMorphometricParms_v2",
-    "landCoverFractions_v2",
-    "RoughnessCalcFunctionV2",
     # Convenience modules
     "solweig_run",
     "solweig_run_gpu",

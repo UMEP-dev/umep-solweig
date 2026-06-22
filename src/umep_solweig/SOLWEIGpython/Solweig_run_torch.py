@@ -90,15 +90,14 @@ def solweig_run(configPath, feedback):
 
     # --- Load on CPU or GPU config
     device = torch.device("cpu")
-    if configDict["calculation_mode"] == "gpu" and torch.cuda.is_available():
+    if torch.cuda.is_available():
         device = torch.device("cuda")
         print(
             "PyTorch and NVIDIA/AMD GPU found. Initiating CUDA mode..."
         )
 
     elif (
-        configDict["calculation_mode"] == "gpu"
-        and hasattr(torch, "xpu")
+        hasattr(torch, "xpu")
         and torch.xpu.is_available()
     ):
         device = torch.device("xpu")
@@ -113,31 +112,12 @@ def solweig_run(configPath, feedback):
     standAlone = int(configDict["standalone"])
 
     # Load DSM
-    if standAlone == 1:
-        dsm, dsm_transf, dsm_crs = common.load_raster(
-            configDict["filepath_dsm"], bbox=None
-        )
-        scale = 1 / dsm_transf.a
-        # dsm_height, dsm_width = dsm.shape  # y rows by x cols
-        # y is flipped - so return max for lower row
-        minx, miny = xy(dsm_transf, dsm.shape[0], 0)
-        # Define the source and target CRS
-        source_crs = pyproj.CRS(dsm_crs)
-        target_crs = pyproj.CRS(4326)  # WGS 84
-        # Create a transformer object
-        transformer = pyproj.Transformer.from_crs(
-            source_crs, target_crs, always_xy=True
-        )
-        # Perform the transformation
-        lon, lat = transformer.transform(minx, miny)
-        nd = -9999  # TODO: extract nodatavalue from rasterio
-    else:
-        # dsmlayer = QgsRasterLayer(configDict['filepath_dsm'])
-        dsm_wkt = QgsRasterLayer(configDict["filepath_dsm"]).crs().toWkt()
-        gdal_dsm = gdal.Open(configDict["filepath_dsm"])
-        lat, lon, scale, minx, miny = xy2latlon_fromraster(dsm_wkt, gdal_dsm)
-        dsm = torch.from_numpy(gdal_dsm.ReadAsArray().astype(float)).to(device)
-        nd = gdal_dsm.GetRasterBand(1).GetNoDataValue()
+    gdal_dsm = gdal.Open(configDict["filepath_dsm"])
+    trf_arr = list(gdal_dsm.GetGeoTransform())
+    dsm_wkt = gdal_dsm.GetProjection()
+    lat, lon, scale, minx, miny = xy2latlon_fromraster(dsm_wkt, gdal_dsm)
+    dsm = torch.from_numpy(gdal_dsm.ReadAsArray().astype(float)).to(device)
+    nd = gdal_dsm.GetRasterBand(1).GetNoDataValue()
 
     rows = dsm.shape[0]
     cols = dsm.shape[1]
@@ -159,18 +139,12 @@ def solweig_run(configPath, feedback):
     trunkratio = param["Tree_settings"]["Value"]["Trunk_ratio"]
     usevegdem = int(configDict["usevegdem"])
     if usevegdem == 1:
-        if standAlone == 0:
-            vegdsm = torch.from_numpy(
-                (
-                    gdal.Open(configDict["filepath_cdsm"])
-                    .ReadAsArray()
-                    .astype(float)
-                )
-            ).to(device)
-        else:
-            vegdsm, _, _ = common.load_raster(
-                configDict["filepath_cdsm"], bbox=None
-            )
+        vegdsm = torch.from_numpy(
+            gdal.Open(configDict["filepath_cdsm"])
+            .ReadAsArray()
+            .astype(float)
+        ).to(device)
+
         if configDict["filepath_tdsm"] != "":
             if standAlone == 0:
                 vegdsm2 = torch.from_numpy(
@@ -198,37 +172,28 @@ def solweig_run(configPath, feedback):
     # Land cover
     landcover = int(configDict["landcover"])
     if landcover == 1:
-        if standAlone == 0:
-            lcgrid = torch.from_numpy(
-                (
-                    gdal.Open(configDict["filepath_lc"])
-                    .ReadAsArray()
-                    .astype(float)
-                )
-            ).to(device)
-        else:
-            lcgrid, _, _ = common.load_raster(
-                configDict["filepath_lc"], bbox=None
+        lcgrid = torch.from_numpy(
+            (
+                gdal.Open(configDict["filepath_lc"])
+                .ReadAsArray()
+                .astype(float)
             )
+        ).to(device)
+
     else:
         lcgrid = torch.ones_like(dsm, device=device)
 
     # DEM for buildings #TODO: fix nodata in standalone
     demforbuild = int(configDict["demforbuild"])
     if demforbuild == 1:
-        if standAlone == 0:
-            gdal_dem = gdal.Open(
-                configDict["filepath_dem"]
-            )  # .ReadAsArray().astype(float)
-            dem = torch.from_numpy(gdal_dem.ReadAsArray().astype(float)).to(
-                device
-            )
-            nd = gdal_dem.GetRasterBand(1).GetNoDataValue()
-        else:
-            dem, _, _ = common.load_raster(
-                configDict["filepath_dem"], bbox=None
-            )
-            nd = -9999  # TODO: standAlone nd exposure
+        gdal_dem = gdal.Open(
+            configDict["filepath_dem"]
+        )  # .ReadAsArray().astype(float)
+        dem = torch.from_numpy(gdal_dem.ReadAsArray().astype(float)).to(
+            device
+        )
+        nd = gdal_dem.GetRasterBand(1).GetNoDataValue()
+
 
         # response to issue and #230
         dem[dem == nd] = 0.0
@@ -248,164 +213,115 @@ def solweig_run(configPath, feedback):
     zip.extractall(configDict["working_dir"])
     zip.close()
 
-    if standAlone == 0:
-        svf = torch.from_numpy(
-            (
-                gdal.Open(configDict["working_dir"] + "/svf.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
-        ).to(device)
-        svfN = torch.from_numpy(
-            (
-                gdal.Open(configDict["working_dir"] + "/svfN.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
-        ).to(device)
-        svfS = torch.from_numpy(
-            (
-                gdal.Open(configDict["working_dir"] + "/svfS.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
-        ).to(device)
-        svfE = torch.from_numpy(
-            (
-                gdal.Open(configDict["working_dir"] + "/svfE.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
-        ).to(device)
-        svfW = torch.from_numpy(
-            (
-                gdal.Open(configDict["working_dir"] + "/svfW.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
-        ).to(device)
-    else:
-        svf, _, _ = common.load_raster(
-            configDict["working_dir"] + "/svf.tif", bbox=None
+    svf = torch.from_numpy(
+        (
+            gdal.Open(configDict["working_dir"] + "/svf.tif")
+            .ReadAsArray()
+            .astype(float)
         )
-        svfN, _, _ = common.load_raster(
-            configDict["working_dir"] + "/svfN.tif", bbox=None
+    ).to(device)
+    svfN = torch.from_numpy(
+        (
+            gdal.Open(configDict["working_dir"] + "/svfN.tif")
+            .ReadAsArray()
+            .astype(float)
         )
-        svfS, _, _ = common.load_raster(
-            configDict["working_dir"] + "/svfS.tif", bbox=None
+    ).to(device)
+    svfS = torch.from_numpy(
+        (
+            gdal.Open(configDict["working_dir"] + "/svfS.tif")
+            .ReadAsArray()
+            .astype(float)
         )
-        svfE, _, _ = common.load_raster(
-            configDict["working_dir"] + "/svfE.tif", bbox=None
+    ).to(device)
+    svfE = torch.from_numpy(
+        (
+            gdal.Open(configDict["working_dir"] + "/svfE.tif")
+            .ReadAsArray()
+            .astype(float)
         )
-        svfW, _, _ = common.load_raster(
-            configDict["working_dir"] + "/svfW.tif", bbox=None
+    ).to(device)
+    svfW = torch.from_numpy(
+        (
+            gdal.Open(configDict["working_dir"] + "/svfW.tif")
+            .ReadAsArray()
+            .astype(float)
         )
+    ).to(device)
 
     if usevegdem == 1:
-        if standAlone == 0:
-            svfveg = torch.from_numpy(
-                (
-                    gdal.Open(configDict["working_dir"] + "/svfveg.tif")
-                    .ReadAsArray()
-                    .astype(float)
-                )
-            ).to(device)
-            svfNveg = torch.from_numpy(
-                (
-                    gdal.Open(configDict["working_dir"] + "/svfNveg.tif")
-                    .ReadAsArray()
-                    .astype(float)
-                )
-            ).to(device)
-            svfSveg = torch.from_numpy(
-                (
-                    gdal.Open(configDict["working_dir"] + "/svfSveg.tif")
-                    .ReadAsArray()
-                    .astype(float)
-                )
-            ).to(device)
-            svfEveg = torch.from_numpy(
-                (
-                    gdal.Open(configDict["working_dir"] + "/svfEveg.tif")
-                    .ReadAsArray()
-                    .astype(float)
-                )
-            ).to(device)
-            svfWveg = torch.from_numpy(
-                (
-                    gdal.Open(configDict["working_dir"] + "/svfWveg.tif")
-                    .ReadAsArray()
-                    .astype(float)
-                )
-            ).to(device)
+        svfveg = torch.from_numpy(
+            (
+                gdal.Open(configDict["working_dir"] + "/svfveg.tif")
+                .ReadAsArray()
+                .astype(float)
+            )
+        ).to(device)
+        svfNveg = torch.from_numpy(
+            (
+                gdal.Open(configDict["working_dir"] + "/svfNveg.tif")
+                .ReadAsArray()
+                .astype(float)
+            )
+        ).to(device)
+        svfSveg = torch.from_numpy(
+            (
+                gdal.Open(configDict["working_dir"] + "/svfSveg.tif")
+                .ReadAsArray()
+                .astype(float)
+            )
+        ).to(device)
+        svfEveg = torch.from_numpy(
+            (
+                gdal.Open(configDict["working_dir"] + "/svfEveg.tif")
+                .ReadAsArray()
+                .astype(float)
+            )
+        ).to(device)
+        svfWveg = torch.from_numpy(
+            (
+                gdal.Open(configDict["working_dir"] + "/svfWveg.tif")
+                .ReadAsArray()
+                .astype(float)
+            )
+        ).to(device)
 
-            svfaveg = torch.from_numpy(
-                (
-                    gdal.Open(configDict["working_dir"] + "/svfaveg.tif")
-                    .ReadAsArray()
-                    .astype(float)
-                )
-            ).to(device)
-            svfNaveg = torch.from_numpy(
-                (
-                    gdal.Open(configDict["working_dir"] + "/svfNaveg.tif")
-                    .ReadAsArray()
-                    .astype(float)
-                )
-            ).to(device)
-            svfSaveg = torch.from_numpy(
-                (
-                    gdal.Open(configDict["working_dir"] + "/svfSaveg.tif")
-                    .ReadAsArray()
-                    .astype(float)
-                )
-            ).to(device)
-            svfEaveg = torch.from_numpy(
-                (
-                    gdal.Open(configDict["working_dir"] + "/svfEaveg.tif")
-                    .ReadAsArray()
-                    .astype(float)
-                )
-            ).to(device)
-            svfWaveg = torch.from_numpy(
-                (
-                    gdal.Open(configDict["working_dir"] + "/svfWaveg.tif")
-                    .ReadAsArray()
-                    .astype(float)
-                )
-            ).to(device)
-        else:
-            svfveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfveg.tif", bbox=None
+        svfaveg = torch.from_numpy(
+            (
+                gdal.Open(configDict["working_dir"] + "/svfaveg.tif")
+                .ReadAsArray()
+                .astype(float)
             )
-            svfNveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfNveg.tif", bbox=None
+        ).to(device)
+        svfNaveg = torch.from_numpy(
+            (
+                gdal.Open(configDict["working_dir"] + "/svfNaveg.tif")
+                .ReadAsArray()
+                .astype(float)
             )
-            svfSveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfSveg.tif", bbox=None
+        ).to(device)
+        svfSaveg = torch.from_numpy(
+            (
+                gdal.Open(configDict["working_dir"] + "/svfSaveg.tif")
+                .ReadAsArray()
+                .astype(float)
             )
-            svfEveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfEveg.tif", bbox=None
+        ).to(device)
+        svfEaveg = torch.from_numpy(
+            (
+                gdal.Open(configDict["working_dir"] + "/svfEaveg.tif")
+                .ReadAsArray()
+                .astype(float)
             )
-            svfWveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfWveg.tif", bbox=None
+        ).to(device)
+        svfWaveg = torch.from_numpy(
+            (
+                gdal.Open(configDict["working_dir"] + "/svfWaveg.tif")
+                .ReadAsArray()
+                .astype(float)
             )
+        ).to(device)
 
-            svfaveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfaveg.tif", bbox=None
-            )
-            svfNaveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfNaveg.tif", bbox=None
-            )
-            svfSaveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfSaveg.tif", bbox=None
-            )
-            svfEaveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfEaveg.tif", bbox=None
-            )
-            svfWaveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfWaveg.tif", bbox=None
-            )
     else:
         svfveg = torch.ones((rows, cols)).to(device)
         svfNveg = torch.ones((rows, cols)).to(device)
@@ -428,22 +344,12 @@ def solweig_run(configPath, feedback):
     # %matlab crazyness around 0
     svfalfa = torch.arcsin(torch.exp((torch.log((1.0 - tmp)) / 2.0)))
 
-    if standAlone == 0:
-        wallheight = torch.from_numpy(
-            (gdal.Open(configDict["filepath_wh"]).ReadAsArray().astype(float))
-        ).to(device)
-        wallaspect = torch.from_numpy(
-            (gdal.Open(configDict["filepath_wa"]).ReadAsArray().astype(float))
-        ).to(device)
-    else:
-        wallheight, _, _ = common.load_raster(
-            configDict["filepath_wh"], bbox=None
-        )
-        wallheight = torch.tensor(wallheight, device=device)
-        wallaspect, _, _ = common.load_raster(
-            configDict["filepath_wa"], bbox=None
-        )
-        wallaspect = torch.tensor(wallaspect, device=device)
+    wallheight = torch.from_numpy(
+        (gdal.Open(configDict["filepath_wh"]).ReadAsArray().astype(float))
+    ).to(device)
+    wallaspect = torch.from_numpy(
+        (gdal.Open(configDict["filepath_wa"]).ReadAsArray().astype(float))
+    ).to(device)
 
     # Metdata
     headernum = 1
@@ -483,29 +389,15 @@ def solweig_run(configPath, feedback):
         poi_field = configDict[
             "poi_field"
         ]  # self.parameterAsString(parameters, self.POI_FIELD, context)
-        if standAlone == 0:
 
-            poi_field = configDict[
-                "woi_field"
-            ]  # self.parameterAsStrings(parameters, self.WOI_FIELD, context)
-            poisxy, poiname = pointOfInterest(
-                configDict["poi_file"], poi_field, scale, gdal_dsm
-            )
+        poi_field = configDict[
+            "woi_field"
+        ]  # self.parameterAsStrings(parameters, self.WOI_FIELD, context)
+        poisxy, poiname = pointOfInterest(
+            configDict["poi_file"], poi_field, scale, gdal_dsm
+        )
 
-        else:
-            pois_gdf = gpd.read_file(configDict["poi_file"])
-            numfeat = pois_gdf.shape[0]
-            poisxy = torch.zeros((numfeat, 3)).to(device) - 999
-            for idx, row in pois_gdf.iterrows():
-                y, x = rowcol(
-                    dsm_transf,
-                    row["geometry"].centroid.x,
-                    row["geometry"].centroid.y,
-                )  # TODO: This produce different result since no standalone round coordinates
-                poiname.append(row[configDict["poi_field"]])
-                poisxy[idx, 0] = idx
-                poisxy[idx, 1] = x
-                poisxy[idx, 2] = y
+
 
         for k in range(0, poisxy.shape[0]):
             poi_save = []  # torch.zeros((1, 33))
@@ -635,19 +527,12 @@ def solweig_run(configPath, feedback):
         buildings[buildings >= 2.0] = 0.0
 
     if int(configDict["savebuild"]) == 1:
-        if standAlone == 0:
-            saveraster(
-                gdal_dsm,
-                configDict["output_dir"] + "/buildings.tif",
-                buildings.detach().cpu().numpy(),
-            )
-        else:
-            common.save_raster(
-                configDict["output_dir"] + "/buildings.tif",
-                buildings.detach().cpu().numpy(),
-                dsm_transf,
-                dsm_crs,
-            )
+        saveraster(
+            gdal_dsm,
+            configDict["output_dir"] + "/buildings.tif",
+            buildings.detach().cpu().numpy(),
+        )
+
 
     # Import shadow matrices (Anisotropic sky)
     anisotropic_sky = int(configDict["aniso"])
@@ -833,27 +718,13 @@ def solweig_run(configPath, feedback):
         woi_file = configDict["woi_file"]
         if woi_file:
             # (dsm_minx, dsm_x_size, dsm_x_rotation, dsm_miny, dsm_y_rotation, dsm_y_size) = gdal_dsm.GetGeoTransform() #TODO: fix for standalone
-            if standAlone == 0:
-                woi_field = configDict[
-                    "woi_field"
-                ]  # self.parameterAsStrings(parameters, self.WOI_FIELD, context)
-                woisxy, woiname = pointOfInterest(
-                    configDict["woi_file"], woi_field, scale, gdal_dsm
-                )
-            else:
-                pois_gdf = gpd.read_file(configDict["poi_file"])
-                numfeat = pois_gdf.shape[0]
-                poisxy = torch.zeros((numfeat, 3)).to(device) - 999
-                for idx, row in pois_gdf.iterrows():
-                    y, x = rowcol(
-                        dsm_transf,
-                        row["geometry"].centroid.x,
-                        row["geometry"].centroid.y,
-                    )  # TODO: This produce different result since no standalone round coordinates
-                    poiname.append(row[configDict["poi_field"]])
-                    poisxy[idx, 0] = idx
-                    poisxy[idx, 1] = x
-                    poisxy[idx, 2] = y
+            woi_field = configDict[
+                "woi_field"
+            ]  # self.parameterAsStrings(parameters, self.WOI_FIELD, context)
+            woisxy, woiname = pointOfInterest(
+                configDict["woi_file"], woi_field, scale, gdal_dsm
+            )
+
 
         # Create pandas datetime object to be used when createing an xarray DataSet where wall temperatures/radiation is stored and eventually saved as a NetCDf
         if configDict["wallnetcdf"] == 1:
@@ -883,10 +754,6 @@ def solweig_run(configPath, feedback):
     else:
         timestepdec = dectime[1] - dectime[0]
     timeadd = 0.0
-    # timeaddE = 0.
-    # timeaddS = 0.
-    # timeaddW = 0.
-    # timeaddN = 0.
     firstdaytime = 1.0
 
     # Save hemispheric image
@@ -1371,104 +1238,55 @@ def solweig_run(configPath, feedback):
         )
 
         if configDict["outputtmrt"] == "1":
-            if standAlone == 0:
-                saveraster(
-                    gdal_dsm,
-                    configDict["output_dir"] + "/Tmrt_" + time_code + ".tif",
-                    Tmrt.detach().cpu().numpy(),
-                )
-            else:
-                common.save_raster(
-                    configDict["output_dir"] + "/Tmrt_" + time_code + ".tif",
-                    Tmrt.detach().cpu().numpy(),
-                    dsm_transf,
-                    dsm_crs,
-                )
+            saveraster(
+                gdal_dsm,
+                configDict["output_dir"] + "/Tmrt_" + time_code + ".tif",
+                Tmrt.detach().cpu().numpy(),
+            )
+
         if configDict["outputkup"] == "1":
-            if standAlone == 0:
-                saveraster(
-                    gdal_dsm,
-                    configDict["output_dir"] + "/Kup_" + time_code + ".tif",
-                    Kup.detach().cpu().numpy(),
-                )
-            else:
-                common.save_raster(
-                    configDict["output_dir"] + "/Kup_" + time_code + ".tif",
-                    Kup.detach().cpu().numpy(),
-                    dsm_transf,
-                    dsm_crs,
-                )
+            saveraster(
+                gdal_dsm,
+                configDict["output_dir"] + "/Kup_" + time_code + ".tif",
+                Kup.detach().cpu().numpy(),
+            )
+
         if configDict["outputkdown"] == "1":
-            if standAlone == 0:
-                saveraster(
-                    gdal_dsm,
-                    configDict["output_dir"] + "/Kdown_" + time_code + ".tif",
-                    Kdown.detach().cpu().numpy(),
-                )
-            else:
-                common.save_raster(
-                    configDict["output_dir"] + "/Kdown_" + time_code + ".tif",
-                    Kdown.detach().cpu().numpy(),
-                    dsm_transf,
-                    dsm_crs,
-                )
+            saveraster(
+                gdal_dsm,
+                configDict["output_dir"] + "/Kdown_" + time_code + ".tif",
+                Kdown.detach().cpu().numpy(),
+            )
+
         if configDict["outputlup"] == "1":
-            if standAlone == 0:
-                saveraster(
-                    gdal_dsm,
-                    configDict["output_dir"] + "/Lup_" + time_code + ".tif",
-                    Lup.detach().cpu().numpy(),
-                )
-            else:
-                common.save_raster(
-                    configDict["output_dir"] + "/Lup_" + time_code + ".tif",
-                    Lup.detach().cpu().numpy(),
-                    dsm_transf,
-                    dsm_crs,
-                )
+            saveraster(
+                gdal_dsm,
+                configDict["output_dir"] + "/Lup_" + time_code + ".tif",
+                Lup.detach().cpu().numpy(),
+            )
+
         if configDict["outputldown"] == "1":
-            if standAlone == 0:
-                saveraster(
-                    gdal_dsm,
-                    configDict["output_dir"] + "/Ldown_" + time_code + ".tif",
-                    Ldown.detach().cpu().numpy(),
-                )
-            else:
-                common.save_raster(
-                    configDict["output_dir"] + "/Ldown_" + time_code + ".tif",
-                    Ldown.detach().cpu().numpy(),
-                    dsm_transf,
-                    dsm_crs,
-                )
+            saveraster(
+                gdal_dsm,
+                configDict["output_dir"] + "/Ldown_" + time_code + ".tif",
+                Ldown.detach().cpu().numpy(),
+            )
+
         if configDict["outputsh"] == "1":
-            if standAlone == 0:
-                saveraster(
-                    gdal_dsm,
-                    configDict["output_dir"] + "/Shadow_" + time_code + ".tif",
-                    shadow.detach().cpu().numpy(),
-                )
-            else:
-                common.save_raster(
-                    configDict["output_dir"] + "/Shadow_" + time_code + ".tif",
-                    shadow.detach().cpu().numpy(),
-                    dsm_transf,
-                    dsm_crs,
-                )
+            saveraster(
+                gdal_dsm,
+                configDict["output_dir"] + "/Shadow_" + time_code + ".tif",
+                shadow.detach().cpu().numpy(),
+            )
+
 
         if configDict["outputkdiff"] == "1":
-            if standAlone == 0:
-                saveraster(
-                    gdal_dsm,
-                    configDict["output_dir"] + "/Kdiff_" + time_code + ".tif",
-                    dRad.detach().cpu().numpy(),
-                )
-            else:
-                common.save_raster(
-                    configDict["output_dir"] + "/Kdiff_" + time_code + ".tif",
-                    dRad.detach().cpu().numpy(),
-                    dsm_transf,
-                    dsm_crs,
-                )
+            saveraster(
+                gdal_dsm,
+                configDict["output_dir"] + "/Kdiff_" + time_code + ".tif",
+                dRad.detach().cpu().numpy(),
+            )
+
 
         # Clean up iteration tensors after output
         if device.type == "cuda" or device.type == "xpu":
@@ -1598,19 +1416,12 @@ def solweig_run(configPath, feedback):
     tmrtplot = (
         tmrtplot / Ta.__len__()
     )  # fix average Tmrt instead of sum, 20191022
-    if standAlone == 0:
-        saveraster(
-            gdal_dsm,
-            configDict["output_dir"] + "/Tmrt_average.tif",
-            tmrtplot.detach().cpu().numpy(),
-        )
-    else:
-        common.save_raster(
-            configDict["output_dir"] + "/Tmrt_average.tif",
-            tmrtplot,
-            dsm_transf,
-            dsm_crs,
-        )
+    saveraster(
+        gdal_dsm,
+        configDict["output_dir"] + "/Tmrt_average.tif",
+        tmrtplot.detach().cpu().numpy(),
+    )
+
 
     if device.type == "cuda":
         torch.cuda.empty_cache()

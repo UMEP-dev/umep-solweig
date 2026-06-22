@@ -1,7 +1,8 @@
 import numpy as np
-from qgis.core import QgsVectorLayer
-from osgeo.gdalconst import *
 
+
+from osgeo.gdalconst import *
+from osgeo import gdal, ogr
 
 def pointOfInterest(poilyr, poi_field, scale, gdal_dsm):
 
@@ -15,7 +16,12 @@ def pointOfInterest(poilyr, poi_field, scale, gdal_dsm):
     ) = gdal_dsm.GetGeoTransform()  # TODO: fix for standalone
 
     # header = 'yyyy id   it imin dectime altitude azimuth    Ta'
-    poilyr = QgsVectorLayer(poilyr, "point", "ogr")
+    datasource = ogr.Open(poilyr)
+    if datasource is None:
+        raise FileNotFoundError(f"Could not open vector file: {poilyr}")
+
+    # Overwrite poilyr with the layer object, matching QGIS behavior
+    poilyr = datasource.GetLayer()
     idx = poilyr.fields().indexFromName(poi_field)
     numfeat = poilyr.featureCount()
     poiname = []

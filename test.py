@@ -4,6 +4,7 @@ import types
 import importlib
 import time
 import threading
+import torch
 import matplotlib.pyplot as plt
 
 # Try importing pynvml for NVIDIA GPU tracking
@@ -26,14 +27,12 @@ sys.path.insert(0, str(base / "src"))
 import umep_solweig
 
 # --- Chargement du module ---
-if GPU_AVAILABLE:
-    mod = importlib.import_module("umep_solweig.solweig_run_gpu")
-else:
-    mod = importlib.import_module("umep_solweig.solweig_run")
+mod_gpu = importlib.import_module("umep_solweig.solweig_run_gpu")
+mod_cpu = importlib.import_module("umep_solweig.solweig_run")
 
 # --- Chemins des fichiers de configuration ---
-cpu_config_path = "/home/lemap/Documents/suede/umep_process_execute/UMEP-processing/processor/configsolweig.ini"
-gpu_config_path = "/home/lemap/Documents/suede/umep_process_execute/configsolweig.ini"
+cpu_config_path = "C:\\Users\\maelp\\Documents\\suede\\umep_process_execute\\UMEP-processing\\processor\\configsolweig.ini"
+gpu_config_path = "C:\\Users\\maelp\\Documents\\suede\\umep_process_execute\\configsolweig.ini"
 
 cpu_results = []
 gpu_results = []
@@ -131,13 +130,13 @@ if not GPU_AVAILABLE:
     print("[Attention] pynvml non configuré ou GPU NVIDIA introuvable. Les métriques GPU/VRAM renverront 0%.")
 print("-" * 60)
 
-# --- Mode CPU (Commenté comme dans l'original) ---
+#--- Mode CPU (Commenté comme dans l'original) ---
 # monitor_cpu = ResourceMonitor(interval=0.1)
 # monitor_cpu.start()
 # print_progress_bar(0, iterations, prefix='Progression CPU')
 # for i in range(iterations):
 #     start_time = time.time()
-#     mod.solweig_run(cpu_config_path, None)
+#     mod_cpu.solweig_run(cpu_config_path, None)
 #     cpu_results.append(time.time() - start_time)
 #     print_progress_bar(i + 1, iterations, prefix='Progression CPU')
 # monitor_cpu.stop()
@@ -160,7 +159,7 @@ monitor_gpu.start()
 print_progress_bar(0, iterations, prefix='Progression GPU')
 for i in range(iterations):
     start_time = time.time()
-    mod.solweig_run(gpu_config_path, None)
+    mod_gpu.solweig_run(gpu_config_path, None)
     gpu_results.append(time.time() - start_time)
     print_progress_bar(i + 1, iterations, prefix='Progression GPU')
 

@@ -1,5 +1,7 @@
 __author__ = "xlinfr"
 
+from pathlib import Path
+
 import numpy as np
 from osgeo import gdal, osr
 from osgeo.gdalconst import GDT_Float32
@@ -7,6 +9,18 @@ from pandas import read_csv, to_datetime
 import os
 import re
 
+try:
+    import pyproj
+    import rasterio
+
+    from rasterio.transform import Affine, from_origin
+    from shapely import geometry
+
+    GDAL_ENV = False
+
+except:
+    from osgeo import gdal
+    GDAL_ENV = True
 
 # Slope and aspect used in SEBE and Wall aspect
 def get_ders(dsm, scale):
@@ -158,52 +172,78 @@ def createTSlist():
     return sorted_timezones, timezones_by_offset
 
 
-# def createTSlistOLD():
-#     import pytz
-#     from datetime import datetime, timezone
+def check_path(path_str: str | Path, make_dir: bool = False) -> Path:
+    # Ensure path exists
+    path = Path(path_str).absolute()
+    if not path.parent.exists():
+        if make_dir:
+            path.parent.mkdir(parents=True, exist_ok=True)
+        else:
+            raise OSError(f"Parent directory {path} does not exist. Set make_dir=True to create it.")
+    if not path.exists() and not path.suffix:
+        if make_dir:
+            path.mkdir(parents=True, exist_ok=True)
+        else:
+            raise OSError(f"Path {path} does not exist. Set make_dir=True to create it.")
+    return path
 
-#     # Get the current time in naive UTC
-#     #now = datetime.utcnow()
-#     now = datetime.now(timezone.utc)
-
-#     # Dictionary to store timezones grouped by UTC offset
-#     timezones_by_offset = {}
-
-#     # Iterate through all timezones
-#     for tz in pytz.all_timezones:
-#         timezone = pytz.timezone(tz)
-#         localized_time = timezone.localize(now, is_dst=None)
-#         offset = localized_time.utcoffset()
-#         if offset is not None:
-#             total_minutes = int(offset.total_seconds() / 60)
-#             hours, minutes = divmod(abs(total_minutes), 60)
-#             sign = '+' if total_minutes >= 0 else '-'
-#             offset_str = f"UTC{sign}{hours:02d}:{minutes:02d}"
-#             offset_hours = total_minutes / 60
-
-#             if offset_str not in timezones_by_offset:
-#                 timezones_by_offset[offset_str] = {
-#                     "utc_offset": offset_hours,
-#                     "timezones": []
-#                 }
-#             # Add up to 3 example timezones per offset
-#             if len(timezones_by_offset[offset_str]["timezones"]) < 3:
-#                 timezones_by_offset[offset_str]["timezones"].append(tz)
-
-#     # Convert the dictionary to a list of dictionaries
-#     timezones_list = [
-#         {
-#             "utc_offset_str": offset,
-#             "utc_offset": data["utc_offset"],
-#             "timezones": data["timezones"]
-#         }
-#         for offset, data in timezones_by_offset.items()
-#     ]
-
-#     # Sort the list by UTC offset
-#     sorted_timezones = sorted(timezones_list, key=lambda x: x['utc_offset'])
-
-#     return sorted_timezones, timezones_by_offset
+def save_raster(
+    out_path_str: str, data_arr: np.ndarray, trf_arr: list[float], crs_wkt: str, no_data_val: float = -9999
+):
+    attempts = 2
+    while attempts > 0:
+        attempts -= 1
+        try:
+            # Save raster using GDAL or rasterio
+            out_path = check_path(out_path_str, make_dir=True)
+            height, width = data_arr.shape
+            if GDAL_ENV is False:
+                trf = Affine.from_gdal(*trf_arr)
+                crs = None
+                if crs_wkt:
+                    crs = pyproj.CRS(crs_wkt)
+                with rasterio.open(
+                    out_path,
+                    "w",
+                    driver="GTiff",
+                    height=height,
+                    width=width,
+                    count=1,
+                    dtype=data_arr.dtype,
+                    crs=crs,
+                    transform=trf,
+                    nodata=no_data_val,
+                ) as dst:
+                    dst.write(data_arr, 1)
+            else:
+                # Map numpy dtype to GDAL type
+                dtype_map = {
+                    np.dtype("uint8"): gdal.GDT_Byte,
+                    np.dtype("int16"): gdal.GDT_Int16,
+                    np.dtype("uint16"): gdal.GDT_UInt16,
+                    np.dtype("int32"): gdal.GDT_Int32,
+                    np.dtype("uint32"): gdal.GDT_UInt32,
+                    np.dtype("float32"): gdal.GDT_Float32,
+                    np.dtype("float64"): gdal.GDT_Float64,
+                }
+                gdal_dtype = dtype_map.get(data_arr.dtype, gdal.GDT_Float32)
+                driver = gdal.GetDriverByName("GTiff")
+                ds = driver.Create(str(out_path), width, height, 1, gdal_dtype)
+                # trf is a list: [top left x, w-e pixel size, rotation, top left y, rotation, n-s pixel size]
+                ds.SetGeoTransform(tuple(trf_arr))
+                # GetProjection returns WKT (string)
+                if crs_wkt:
+                    ds.SetProjection(crs_wkt)
+                band = ds.GetRasterBand(1)
+                band.WriteArray(data_arr, 0, 0)
+                band.SetNoDataValue(no_data_val)
+                ds.FlushCache()
+                ds = None
+                return# Success, exit the function
+        except Exception as e:
+            print(f"Error saving raster, attempts left {attempts}: {e}")
+            if attempts == 0:
+                raise e
 
 
 def get_resolution_from_file(folder_path):

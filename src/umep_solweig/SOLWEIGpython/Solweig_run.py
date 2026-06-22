@@ -6,6 +6,8 @@
 
 # sommon imports
 from __future__ import absolute_import
+
+from umep_solweig.util.misc import save_raster
 from ..util.umep_solweig_export_component import read_solweig_config
 from ..util.SEBESOLWEIGCommonFiles.Solweig_v2015_metdata_noload import (
     Solweig_2015a_metdata_noload,
@@ -53,6 +55,7 @@ try:
     import pyproj
     from tqdm import tqdm
     import geopandas as gpd
+    from osgeo import osr, gdal
 except:
     pass
 
@@ -84,31 +87,13 @@ def solweig_run(configPath, feedback):
     absL = param["Tmrt_params"]["Value"]["absL"]
 
     # Load DSM
-    if standAlone == 1:
-        dsm, dsm_transf, dsm_crs = common.load_raster(
-            configDict["filepath_dsm"], bbox=None
-        )
-        scale = 1 / dsm_transf.a
-        # dsm_height, dsm_width = dsm.shape  # y rows by x cols
-        # y is flipped - so return max for lower row
-        minx, miny = xy(dsm_transf, dsm.shape[0], 0)
-        # Define the source and target CRS
-        source_crs = pyproj.CRS(dsm_crs)
-        target_crs = pyproj.CRS(4326)  # WGS 84
-        # Create a transformer object
-        transformer = pyproj.Transformer.from_crs(
-            source_crs, target_crs, always_xy=True
-        )
-        # Perform the transformation
-        lon, lat = transformer.transform(minx, miny)
-        nd = -9999  # TODO: extract nodatavalue from rasterio
-    else:
-        # dsmlayer = QgsRasterLayer(configDict['filepath_dsm'])
-        dsm_wkt = QgsRasterLayer(configDict["filepath_dsm"]).crs().toWkt()
-        gdal_dsm = gdal.Open(configDict["filepath_dsm"])
-        lat, lon, scale, minx, miny = xy2latlon_fromraster(dsm_wkt, gdal_dsm)
-        dsm = gdal_dsm.ReadAsArray().astype(float)
-        nd = gdal_dsm.GetRasterBand(1).GetNoDataValue()
+    gdal_dsm = gdal.Open(configDict["filepath_dsm"])
+    trf_arr = list(gdal_dsm.GetGeoTransform())
+    dsm_wkt = gdal_dsm.GetProjection()
+    lat, lon, scale, minx, miny = xy2latlon_fromraster(dsm_wkt, gdal_dsm)
+    dsm = gdal_dsm.ReadAsArray().astype(float)
+    nd = gdal_dsm.GetRasterBand(1).GetNoDataValue()
+
 
     rows = dsm.shape[0]
     cols = dsm.shape[1]
@@ -130,27 +115,19 @@ def solweig_run(configPath, feedback):
     trunkratio = param["Tree_settings"]["Value"]["Trunk_ratio"]
     usevegdem = int(configDict["usevegdem"])
     if usevegdem == 1:
-        if standAlone == 0:
-            vegdsm = (
-                gdal.Open(configDict["filepath_cdsm"])
+        vegdsm = (
+            gdal.Open(configDict["filepath_cdsm"])
+            .ReadAsArray()
+            .astype(float)
+        )
+
+        if configDict["filepath_tdsm"] != "":
+            vegdsm2 = (
+                gdal.Open(configDict["filepath_tdsm"])
                 .ReadAsArray()
                 .astype(float)
             )
-        else:
-            vegdsm, _, _ = common.load_raster(
-                configDict["filepath_cdsm"], bbox=None
-            )
-        if configDict["filepath_tdsm"] != "":
-            if standAlone == 0:
-                vegdsm2 = (
-                    gdal.Open(configDict["filepath_tdsm"])
-                    .ReadAsArray()
-                    .astype(float)
-                )
-            else:
-                vegdsm2, _, _ = common.load_raster(
-                    configDict["filepath_tdsm"], bbox=None
-                )
+
         else:
             vegdsm2 = vegdsm * trunkratio
     else:
@@ -160,33 +137,23 @@ def solweig_run(configPath, feedback):
     # Land cover
     landcover = int(configDict["landcover"])
     if landcover == 1:
-        if standAlone == 0:
-            lcgrid = (
-                gdal.Open(configDict["filepath_lc"])
-                .ReadAsArray()
-                .astype(float)
-            )
-        else:
-            lcgrid, _, _ = common.load_raster(
-                configDict["filepath_lc"], bbox=None
-            )
+        lcgrid = (
+            gdal.Open(configDict["filepath_lc"])
+            .ReadAsArray()
+            .astype(float)
+        )
+
     else:
         lcgrid = np.ones_like(dsm)
 
     # DEM for buildings #TODO: fix nodata in standalone
     demforbuild = int(configDict["demforbuild"])
     if demforbuild == 1:
-        if standAlone == 0:
-            gdal_dem = gdal.Open(
-                configDict["filepath_dem"]
-            )  # .ReadAsArray().astype(float)
-            dem = gdal_dem.ReadAsArray().astype(float)
-            nd = gdal_dem.GetRasterBand(1).GetNoDataValue()
-        else:
-            dem, _, _ = common.load_raster(
-                configDict["filepath_dem"], bbox=None
-            )
-            nd = -9999  # TODO: standAlone nd exposure
+        gdal_dem = gdal.Open(
+            configDict["filepath_dem"]
+        )  # .ReadAsArray().astype(float)
+        dem = gdal_dem.ReadAsArray().astype(float)
+        nd = gdal_dem.GetRasterBand(1).GetNoDataValue()
 
         # response to issue and #230
         dem[dem == nd] = 0.0
@@ -201,134 +168,86 @@ def solweig_run(configPath, feedback):
     zip.extractall(configDict["working_dir"])
     zip.close()
 
-    if standAlone == 0:
-        svf = (
-            gdal.Open(configDict["working_dir"] + "/svf.tif")
-            .ReadAsArray()
-            .astype(float)
-        )
-        svfN = (
-            gdal.Open(configDict["working_dir"] + "/svfN.tif")
-            .ReadAsArray()
-            .astype(float)
-        )
-        svfS = (
-            gdal.Open(configDict["working_dir"] + "/svfS.tif")
-            .ReadAsArray()
-            .astype(float)
-        )
-        svfE = (
-            gdal.Open(configDict["working_dir"] + "/svfE.tif")
-            .ReadAsArray()
-            .astype(float)
-        )
-        svfW = (
-            gdal.Open(configDict["working_dir"] + "/svfW.tif")
-            .ReadAsArray()
-            .astype(float)
-        )
-    else:
-        svf, _, _ = common.load_raster(
-            configDict["working_dir"] + "/svf.tif", bbox=None
-        )
-        svfN, _, _ = common.load_raster(
-            configDict["working_dir"] + "/svfN.tif", bbox=None
-        )
-        svfS, _, _ = common.load_raster(
-            configDict["working_dir"] + "/svfS.tif", bbox=None
-        )
-        svfE, _, _ = common.load_raster(
-            configDict["working_dir"] + "/svfE.tif", bbox=None
-        )
-        svfW, _, _ = common.load_raster(
-            configDict["working_dir"] + "/svfW.tif", bbox=None
-        )
+    svf = (
+        gdal.Open(configDict["working_dir"] + "/svf.tif")
+        .ReadAsArray()
+        .astype(float)
+    )
+    svfN = (
+        gdal.Open(configDict["working_dir"] + "/svfN.tif")
+        .ReadAsArray()
+        .astype(float)
+    )
+    svfS = (
+        gdal.Open(configDict["working_dir"] + "/svfS.tif")
+        .ReadAsArray()
+        .astype(float)
+    )
+    svfE = (
+        gdal.Open(configDict["working_dir"] + "/svfE.tif")
+        .ReadAsArray()
+        .astype(float)
+    )
+    svfW = (
+        gdal.Open(configDict["working_dir"] + "/svfW.tif")
+        .ReadAsArray()
+        .astype(float)
+    )
+
 
     if usevegdem == 1:
-        if standAlone == 0:
-            svfveg = (
-                gdal.Open(configDict["working_dir"] + "/svfveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
-            svfNveg = (
-                gdal.Open(configDict["working_dir"] + "/svfNveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
-            svfSveg = (
-                gdal.Open(configDict["working_dir"] + "/svfSveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
-            svfEveg = (
-                gdal.Open(configDict["working_dir"] + "/svfEveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
-            svfWveg = (
-                gdal.Open(configDict["working_dir"] + "/svfWveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
+        svfveg = (
+            gdal.Open(configDict["working_dir"] + "/svfveg.tif")
+            .ReadAsArray()
+            .astype(float)
+        )
+        svfNveg = (
+            gdal.Open(configDict["working_dir"] + "/svfNveg.tif")
+            .ReadAsArray()
+            .astype(float)
+        )
+        svfSveg = (
+            gdal.Open(configDict["working_dir"] + "/svfSveg.tif")
+            .ReadAsArray()
+            .astype(float)
+        )
+        svfEveg = (
+            gdal.Open(configDict["working_dir"] + "/svfEveg.tif")
+            .ReadAsArray()
+            .astype(float)
+        )
+        svfWveg = (
+            gdal.Open(configDict["working_dir"] + "/svfWveg.tif")
+            .ReadAsArray()
+            .astype(float)
+        )
 
-            svfaveg = (
-                gdal.Open(configDict["working_dir"] + "/svfaveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
-            svfNaveg = (
-                gdal.Open(configDict["working_dir"] + "/svfNaveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
-            svfSaveg = (
-                gdal.Open(configDict["working_dir"] + "/svfSaveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
-            svfEaveg = (
-                gdal.Open(configDict["working_dir"] + "/svfEaveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
-            svfWaveg = (
-                gdal.Open(configDict["working_dir"] + "/svfWaveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
-        else:
-            svfveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfveg.tif", bbox=None
-            )
-            svfNveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfNveg.tif", bbox=None
-            )
-            svfSveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfSveg.tif", bbox=None
-            )
-            svfEveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfEveg.tif", bbox=None
-            )
-            svfWveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfWveg.tif", bbox=None
-            )
+        svfaveg = (
+            gdal.Open(configDict["working_dir"] + "/svfaveg.tif")
+            .ReadAsArray()
+            .astype(float)
+        )
+        svfNaveg = (
+            gdal.Open(configDict["working_dir"] + "/svfNaveg.tif")
+            .ReadAsArray()
+            .astype(float)
+        )
+        svfSaveg = (
+            gdal.Open(configDict["working_dir"] + "/svfSaveg.tif")
+            .ReadAsArray()
+            .astype(float)
+        )
+        svfEaveg = (
+            gdal.Open(configDict["working_dir"] + "/svfEaveg.tif")
+            .ReadAsArray()
+            .astype(float)
+        )
+        svfWaveg = (
+            gdal.Open(configDict["working_dir"] + "/svfWaveg.tif")
+            .ReadAsArray()
+            .astype(float)
+        )
 
-            svfaveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfaveg.tif", bbox=None
-            )
-            svfNaveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfNaveg.tif", bbox=None
-            )
-            svfSaveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfSaveg.tif", bbox=None
-            )
-            svfEaveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfEaveg.tif", bbox=None
-            )
-            svfWaveg, _, _ = common.load_raster(
-                configDict["working_dir"] + "/svfWaveg.tif", bbox=None
-            )
     else:
         svfveg = np.ones((rows, cols))
         svfNveg = np.ones((rows, cols))
@@ -346,20 +265,13 @@ def solweig_run(configPath, feedback):
     # %matlab crazyness around 0
     svfalfa = np.arcsin(np.exp((np.log((1.0 - tmp)) / 2.0)))
 
-    if standAlone == 0:
-        wallheight = (
-            gdal.Open(configDict["filepath_wh"]).ReadAsArray().astype(float)
-        )
-        wallaspect = (
-            gdal.Open(configDict["filepath_wa"]).ReadAsArray().astype(float)
-        )
-    else:
-        wallheight, _, _ = common.load_raster(
-            configDict["filepath_wh"], bbox=None
-        )
-        wallaspect, _, _ = common.load_raster(
-            configDict["filepath_wa"], bbox=None
-        )
+    wallheight = (
+        gdal.Open(configDict["filepath_wh"]).ReadAsArray().astype(float)
+    )
+    wallaspect = (
+        gdal.Open(configDict["filepath_wa"]).ReadAsArray().astype(float)
+    )
+
 
     # Metdata
     headernum = 1
@@ -530,19 +442,12 @@ def solweig_run(configPath, feedback):
         buildings[buildings >= 2.0] = 0.0
 
     if int(configDict["savebuild"]) == 1:
-        if standAlone == 0:
-            saveraster(
-                gdal_dsm,
-                configDict["output_dir"] + "/buildings.tif",
-                buildings,
-            )
-        else:
-            common.save_raster(
-                configDict["output_dir"] + "/buildings.tif",
-                buildings,
-                dsm_transf,
-                dsm_crs,
-            )
+        saveraster(
+            gdal_dsm,
+            configDict["output_dir"] + "/buildings.tif",
+            buildings,
+        )
+
 
     # Import shadow matrices (Anisotropic sky)
     anisotropic_sky = int(configDict["aniso"])
@@ -721,27 +626,13 @@ def solweig_run(configPath, feedback):
         woi_file = configDict["woi_file"]
         if woi_file:
             # (dsm_minx, dsm_x_size, dsm_x_rotation, dsm_miny, dsm_y_rotation, dsm_y_size) = gdal_dsm.GetGeoTransform() #TODO: fix for standalone
-            if standAlone == 0:
-                woi_field = configDict[
-                    "woi_field"
-                ]  # self.parameterAsStrings(parameters, self.WOI_FIELD, context)
-                woisxy, woiname = pointOfInterest(
-                    configDict["woi_file"], woi_field, scale, gdal_dsm
-                )
-            else:
-                pois_gdf = gpd.read_file(configDict["poi_file"])
-                numfeat = pois_gdf.shape[0]
-                poisxy = np.zeros((numfeat, 3)) - 999
-                for idx, row in pois_gdf.iterrows():
-                    y, x = rowcol(
-                        dsm_transf,
-                        row["geometry"].centroid.x,
-                        row["geometry"].centroid.y,
-                    )  # TODO: This produce different result since no standalone round coordinates
-                    poiname.append(row[configDict["poi_field"]])
-                    poisxy[idx, 0] = idx
-                    poisxy[idx, 1] = x
-                    poisxy[idx, 2] = y
+            woi_field = configDict[
+                "woi_field"
+            ]  # self.parameterAsStrings(parameters, self.WOI_FIELD, context)
+            woisxy, woiname = pointOfInterest(
+                configDict["woi_file"], woi_field, scale, gdal_dsm
+            )
+
 
         # Create pandas datetime object to be used when createing an xarray DataSet where wall temperatures/radiation is stored and eventually saved as a NetCDf
         if configDict["wallnetcdf"] == 1:
@@ -1226,11 +1117,12 @@ def solweig_run(configPath, feedback):
                     Tmrt,
                 )
             else:
-                common.save_raster(
+                save_raster(
                     configDict["output_dir"] + "/Tmrt_" + time_code + ".tif",
                     Tmrt,
-                    dsm_transf,
-                    dsm_crs,
+                    trf_arr=trf_arr,
+                    crs_wkt=dsm_wkt,
+                    no_data_val=nd,
                 )
         if configDict["outputkup"] == "1":
             if standAlone == 0:
@@ -1240,11 +1132,12 @@ def solweig_run(configPath, feedback):
                     Kup,
                 )
             else:
-                common.save_raster(
+                save_raster(
                     configDict["output_dir"] + "/Kup_" + time_code + ".tif",
                     Kup,
-                    dsm_transf,
-                    dsm_crs,
+                    trf_arr=trf_arr,
+                    crs_wkt=dsm_wkt,
+                    no_data_val=nd,
                 )
         if configDict["outputkdown"] == "1":
             if standAlone == 0:
@@ -1254,11 +1147,12 @@ def solweig_run(configPath, feedback):
                     Kdown,
                 )
             else:
-                common.save_raster(
+                save_raster(
                     configDict["output_dir"] + "/Kdown_" + time_code + ".tif",
                     Kdown,
-                    dsm_transf,
-                    dsm_crs,
+                    trf_arr=trf_arr,
+                    crs_wkt=dsm_wkt,
+                    no_data_val=nd,
                 )
         if configDict["outputlup"] == "1":
             if standAlone == 0:
@@ -1268,11 +1162,12 @@ def solweig_run(configPath, feedback):
                     Lup,
                 )
             else:
-                common.save_raster(
+                save_raster(
                     configDict["output_dir"] + "/Lup_" + time_code + ".tif",
                     Lup,
-                    dsm_transf,
-                    dsm_crs,
+                    trf_arr=trf_arr,
+                    crs_wkt=dsm_wkt,
+                    no_data_val=nd,
                 )
         if configDict["outputldown"] == "1":
             if standAlone == 0:
@@ -1282,11 +1177,12 @@ def solweig_run(configPath, feedback):
                     Ldown,
                 )
             else:
-                common.save_raster(
+                save_raster(
                     configDict["output_dir"] + "/Ldown_" + time_code + ".tif",
                     Ldown,
-                    dsm_transf,
-                    dsm_crs,
+                    trf_arr=trf_arr,
+                    crs_wkt=dsm_wkt,
+                    no_data_val=nd,
                 )
         if configDict["outputsh"] == "1":
             if standAlone == 0:
@@ -1296,11 +1192,12 @@ def solweig_run(configPath, feedback):
                     shadow,
                 )
             else:
-                common.save_raster(
+                save_raster(
                     configDict["output_dir"] + "/Shadow_" + time_code + ".tif",
                     shadow,
-                    dsm_transf,
-                    dsm_crs,
+                    trf_arr=trf_arr,
+                    crs_wkt=dsm_wkt,
+                    no_data_val=nd,
                 )
 
         if configDict["outputkdiff"] == "1":
@@ -1311,11 +1208,12 @@ def solweig_run(configPath, feedback):
                     dRad,
                 )
             else:
-                common.save_raster(
+                save_raster(
                     configDict["output_dir"] + "/Kdiff_" + time_code + ".tif",
                     dRad,
-                    dsm_transf,
-                    dsm_crs,
+                    trf_arr=trf_arr,
+                    crs_wkt=dsm_wkt,
+                    no_data_val=nd,
                 )
 
         # Sky view image of patches
@@ -1418,9 +1316,10 @@ def solweig_run(configPath, feedback):
             gdal_dsm, configDict["output_dir"] + "/Tmrt_average.tif", tmrtplot
         )
     else:
-        common.save_raster(
+        save_raster(
             configDict["output_dir"] + "/Tmrt_average.tif",
             tmrtplot,
-            dsm_transf,
-            dsm_crs,
+            trf_arr=trf_arr,
+            crs_wkt=dsm_wkt,
+            no_data_val=nd
         )
