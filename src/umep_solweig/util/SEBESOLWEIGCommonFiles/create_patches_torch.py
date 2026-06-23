@@ -3,6 +3,7 @@ try:
 except:
     pass
 
+author = "xlinfr and Lemap01"
 
 def create_patches(patch_option, device):
 

@@ -7,6 +7,7 @@ try:
     import torch.nn.functional as F
 except:
     pass
+author = "xlinfr and Lemap01"
 
 
 def shade_on_walls(azimuth, aspect, walls, dsm, f, device):

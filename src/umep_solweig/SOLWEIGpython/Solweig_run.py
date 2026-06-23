@@ -38,6 +38,7 @@ import zipfile
 import pandas as pd
 import matplotlib.pylab as plt
 from shutil import copyfile
+import re
 
 # imports from osgeo/qgis dependency
 try:
@@ -88,11 +89,14 @@ def solweig_run(configPath, feedback):
 
     # Load DSM
     gdal_dsm = gdal.Open(configDict["filepath_dsm"])
-    trf_arr = list(gdal_dsm.GetGeoTransform())
-    dsm_wkt = gdal_dsm.GetProjection()
+    dsm_wkt = QgsRasterLayer(configDict["filepath_dsm"]).crs().toWkt()
     lat, lon, scale, minx, miny = xy2latlon_fromraster(dsm_wkt, gdal_dsm)
     dsm = gdal_dsm.ReadAsArray().astype(float)
     nd = gdal_dsm.GetRasterBand(1).GetNoDataValue()
+    print("Latitude:", lat)
+    print("Longitude:", lon)
+    print("Scale (Pixel Size):", scale)
+    
 
 
     rows = dsm.shape[0]
@@ -151,7 +155,7 @@ def solweig_run(configPath, feedback):
     if demforbuild == 1:
         gdal_dem = gdal.Open(
             configDict["filepath_dem"]
-        )  # .ReadAsArray().astype(float)
+        )
         dem = gdal_dem.ReadAsArray().astype(float)
         nd = gdal_dem.GetRasterBand(1).GetNoDataValue()
 
@@ -307,29 +311,14 @@ def solweig_run(configPath, feedback):
         )
         # poiname = []
         poi_field = configDict["poi_field"]
-        if standAlone == 0:
 
-            poi_field = configDict[
-                "woi_field"
-            ]  # self.parameterAsStrings(parameters, self.WOI_FIELD, context)
-            poisxy, poiname = pointOfInterest(
-                configDict["poi_file"], poi_field, scale, gdal_dsm
-            )
+        poi_field = configDict[
+            "woi_field"
+        ]  # self.parameterAsStrings(parameters, self.WOI_FIELD, context)
+        poisxy, poiname = pointOfInterest(
+            configDict["poi_file"], poi_field, scale, gdal_dsm
+        )
 
-        else:
-            pois_gdf = gpd.read_file(configDict["poi_file"])
-            numfeat = pois_gdf.shape[0]
-            poisxy = np.zeros((numfeat, 3)) - 999
-            for idx, row in pois_gdf.iterrows():
-                y, x = rowcol(
-                    dsm_transf,
-                    row["geometry"].centroid.x,
-                    row["geometry"].centroid.y,
-                )  # TODO: This produce different result since no standalone round coordinates
-                poiname.append(row[configDict["poi_field"]])
-                poisxy[idx, 0] = idx
-                poisxy[idx, 1] = x
-                poisxy[idx, 2] = y
 
         for k in range(0, poisxy.shape[0]):
             poi_save = []  # np.zeros((1, 33))
@@ -339,7 +328,7 @@ def solweig_run(configPath, feedback):
             np.savetxt(
                 data_out, poi_save, delimiter=" ", header=header, comments=""
             )
-        # print(poisxy)
+
         # Num format for POI output
         numformat = "%d %d %d %d %.5f " + "%.2f " * 35
 
@@ -568,18 +557,15 @@ def solweig_run(configPath, feedback):
         voxelMaps = wallData["voxelId"]
         voxelTable = wallData["voxelTable"]
         # Get wall type from standalone
-        if standAlone == 1:
-            wall_type_standalone = {
-                "Brick_wall": "100",
-                "Concrete_wall": "101",
-                "Wood_wall": "102",
-            }
-            wall_type = wall_type_standalone[configDict["walltype"]]
-        else:
-            # Get wall type set in GUI
-            wall_type = configDict[
-                "walltype"
-            ]  # str(100 + int(self.parameterAsString(parameters, self.WALL_TYPE, context))) #TODO
+        wall_type_standalone = {
+            "Brick": "100",
+            "Brick_wall": "100",
+            "Concrete_wall": "101",
+            "Concrete": "101",
+            "Wood_wall": "102",
+            "Wood": "102",
+        }
+        wall_type = wall_type_standalone[configDict["walltype"]]
 
         # Calculate wall height for wall scheme, i.e. include corners (thicker walls)
         walls_scheme = wa.findwalls_sp(
@@ -680,9 +666,6 @@ def solweig_run(configPath, feedback):
         first_unique_day = DOY.copy()
         I0_array = np.zeros((DOY.shape[0]))
 
-    if standAlone == 1:
-        progress = tqdm(total=Ta.__len__())
-
     for i in np.arange(0, Ta.__len__()):
         if feedback is not None:
             feedback.setProgress(
@@ -691,8 +674,6 @@ def solweig_run(configPath, feedback):
             if feedback.isCanceled():
                 feedback.setProgressText("Calculation cancelled")
                 break
-        else:
-            progress.update(1)
 
         # Daily water body temperature
         if landcover == 1:
@@ -1110,111 +1091,54 @@ def solweig_run(configPath, feedback):
         )
 
         if configDict["outputtmrt"] == "1":
-            if standAlone == 0:
-                saveraster(
-                    gdal_dsm,
-                    configDict["output_dir"] + "/Tmrt_" + time_code + ".tif",
-                    Tmrt,
-                )
-            else:
-                save_raster(
-                    configDict["output_dir"] + "/Tmrt_" + time_code + ".tif",
-                    Tmrt,
-                    trf_arr=trf_arr,
-                    crs_wkt=dsm_wkt,
-                    no_data_val=nd,
-                )
+            saveraster(
+                gdal_dsm,
+                configDict["output_dir"] + "/Tmrt_" + time_code + ".tif",
+                Tmrt,
+            )
+
         if configDict["outputkup"] == "1":
-            if standAlone == 0:
-                saveraster(
-                    gdal_dsm,
-                    configDict["output_dir"] + "/Kup_" + time_code + ".tif",
-                    Kup,
-                )
-            else:
-                save_raster(
-                    configDict["output_dir"] + "/Kup_" + time_code + ".tif",
-                    Kup,
-                    trf_arr=trf_arr,
-                    crs_wkt=dsm_wkt,
-                    no_data_val=nd,
-                )
+            saveraster(
+                gdal_dsm,
+                configDict["output_dir"] + "/Kup_" + time_code + ".tif",
+                Kup,
+            )
+
         if configDict["outputkdown"] == "1":
-            if standAlone == 0:
-                saveraster(
-                    gdal_dsm,
-                    configDict["output_dir"] + "/Kdown_" + time_code + ".tif",
-                    Kdown,
-                )
-            else:
-                save_raster(
-                    configDict["output_dir"] + "/Kdown_" + time_code + ".tif",
-                    Kdown,
-                    trf_arr=trf_arr,
-                    crs_wkt=dsm_wkt,
-                    no_data_val=nd,
-                )
+            saveraster(
+                gdal_dsm,
+                configDict["output_dir"] + "/Kdown_" + time_code + ".tif",
+                Kdown,
+            )
+
         if configDict["outputlup"] == "1":
-            if standAlone == 0:
-                saveraster(
-                    gdal_dsm,
-                    configDict["output_dir"] + "/Lup_" + time_code + ".tif",
-                    Lup,
-                )
-            else:
-                save_raster(
-                    configDict["output_dir"] + "/Lup_" + time_code + ".tif",
-                    Lup,
-                    trf_arr=trf_arr,
-                    crs_wkt=dsm_wkt,
-                    no_data_val=nd,
-                )
+            saveraster(
+                gdal_dsm,
+                configDict["output_dir"] + "/Lup_" + time_code + ".tif",
+                Lup,
+            )
+
         if configDict["outputldown"] == "1":
-            if standAlone == 0:
-                saveraster(
-                    gdal_dsm,
-                    configDict["output_dir"] + "/Ldown_" + time_code + ".tif",
-                    Ldown,
-                )
-            else:
-                save_raster(
-                    configDict["output_dir"] + "/Ldown_" + time_code + ".tif",
-                    Ldown,
-                    trf_arr=trf_arr,
-                    crs_wkt=dsm_wkt,
-                    no_data_val=nd,
-                )
+            saveraster(
+                gdal_dsm,
+                configDict["output_dir"] + "/Ldown_" + time_code + ".tif",
+                Ldown,
+            )
+
         if configDict["outputsh"] == "1":
-            if standAlone == 0:
-                saveraster(
-                    gdal_dsm,
-                    configDict["output_dir"] + "/Shadow_" + time_code + ".tif",
-                    shadow,
-                )
-            else:
-                save_raster(
-                    configDict["output_dir"] + "/Shadow_" + time_code + ".tif",
-                    shadow,
-                    trf_arr=trf_arr,
-                    crs_wkt=dsm_wkt,
-                    no_data_val=nd,
-                )
+            saveraster(
+                gdal_dsm,
+                configDict["output_dir"] + "/Shadow_" + time_code + ".tif",
+                shadow,
+            )
 
         if configDict["outputkdiff"] == "1":
-            if standAlone == 0:
-                saveraster(
-                    gdal_dsm,
-                    configDict["output_dir"] + "/Kdiff_" + time_code + ".tif",
-                    dRad,
-                )
-            else:
-                save_raster(
-                    configDict["output_dir"] + "/Kdiff_" + time_code + ".tif",
-                    dRad,
-                    trf_arr=trf_arr,
-                    crs_wkt=dsm_wkt,
-                    no_data_val=nd,
-                )
+            saveraster(
+                gdal_dsm,
+                configDict["output_dir"] + "/Kdiff_" + time_code + ".tif",
+                dRad,
+            )
+
 
         # Sky view image of patches
         if (anisotropic_sky == 1) & (i == 0) & (not poisxy is None):
@@ -1311,15 +1235,6 @@ def solweig_run(configPath, feedback):
     tmrtplot = (
         tmrtplot / Ta.__len__()
     )  # fix average Tmrt instead of sum, 20191022
-    if standAlone == 0:
-        saveraster(
-            gdal_dsm, configDict["output_dir"] + "/Tmrt_average.tif", tmrtplot
-        )
-    else:
-        save_raster(
-            configDict["output_dir"] + "/Tmrt_average.tif",
-            tmrtplot,
-            trf_arr=trf_arr,
-            crs_wkt=dsm_wkt,
-            no_data_val=nd
-        )
+    saveraster(
+        gdal_dsm, configDict["output_dir"] + "/Tmrt_average.tif", tmrtplot
+    )

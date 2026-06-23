@@ -3,6 +3,8 @@
 import numpy as np
 from math import radians
 
+# from numba import jit
+
 
 def shadowingfunctionglobalradiation(
     a, azimuth, altitude, scale, feedback, forsvf
@@ -46,7 +48,11 @@ def shadowingfunctionglobalradiation(
     while amaxvalue >= dz and np.abs(dx) < sizex and np.abs(dy) < sizey:
         if forsvf == 0:
             feedback.setProgress(int(index * total))
-
+            # dlg.progressBar.setValue(index)
+        # while np.logical_and(np.logical_and(amaxvalue >= dz, np.abs(dx) <= sizex), np.abs(dy) <= sizey):(np.logical_and(amaxvalue >= dz, np.abs(dx) <= sizex), np.abs(dy) <= sizey):
+        # if np.logical_or(np.logical_and(pibyfour <= azimuth, azimuth <
+        # threetimespibyfour), np.logical_and(fivetimespibyfour <= azimuth,
+        # azimuth < seventimespibyfour)):
         if (
             pibyfour <= azimuth
             and azimuth < threetimespibyfour
@@ -77,6 +83,8 @@ def shadowingfunctionglobalradiation(
         temp[int(xp1) - 1 : int(xp2), int(yp1) - 1 : int(yp2)] = (
             a[int(xc1) - 1 : int(xc2), int(yc1) - 1 : int(yc2)] - dz
         )
+        # f = np.maximum(f, temp)  # bad performance in python3. Replaced with
+        # fmax
         f = np.fmax(f, temp)
         index += 1.0
 
@@ -85,6 +93,9 @@ def shadowingfunctionglobalradiation(
     sh = np.double(f)
 
     return sh
+
+
+# @jit(nopython=True)
 
 
 def shadowingfunction_20(
@@ -99,6 +110,22 @@ def shadowingfunction_20(
     feedback,
     forsvf,
 ):
+
+    # plt.ion()
+    # fig = plt.figure(figsize=(24, 7))
+    # plt.axis('image')
+    # ax1 = plt.subplot(2, 3, 1)
+    # ax2 = plt.subplot(2, 3, 2)
+    # ax3 = plt.subplot(2, 3, 3)
+    # ax4 = plt.subplot(2, 3, 4)
+    # ax5 = plt.subplot(2, 3, 5)
+    # ax6 = plt.subplot(2, 3, 6)
+    # ax1.title.set_text('fabovea')
+    # ax2.title.set_text('gabovea')
+    # ax3.title.set_text('vegsh at ' + str(altitude))
+    # ax4.title.set_text('lastfabovea')
+    # ax5.title.set_text('lastgabovea')
+    # ax6.title.set_text('vegdem')
 
     # This function casts shadows on buildings and vegetation units.
     # New capability to deal with pergolas 20210827
@@ -117,6 +144,8 @@ def shadowingfunction_20(
         barstep = np.max([sizex, sizey])
         total = 100.0 / barstep
         feedback.setProgress(0)
+        # dlg.progressBar.setRange(0, barstep)
+        # dlg.progressBar.setValue(0)
 
     # initialise parameters
     dx = 0.0
@@ -496,10 +525,7 @@ def shadowingfunction_findwallID(
 
         wallSeen = facesh
         uniqueWallIDs = uniqueWallIDs * wallSeen
-        # uniqueWallIDs = ((uniqueWallIDs - firstMove) < 0) * uniqueWallIDsOrig + uniqueWallIDs # adding missing corner
-        # wallSeenHeight = walls * wallSeen
 
-        # temp2[xp1:xp2, yp1:yp2] = wallSeenHeight[xc1:xc2, yc1:yc2] - dz # Moving wall shadow
         # Moving wall id
         tempwallID[xp1:xp2, yp1:yp2] = uniqueWallIDs[xc1:xc2, yc1:yc2]
 
@@ -514,6 +540,7 @@ def shadowingfunction_findwallID(
         # temp3 indicates those pixels that the walls have not progressed into
         # yet (saved in previous iteration).
         buildIDSeen = (temp2 > 0) * temp3 * tempwallID + buildIDSeen
+
 
         # voxelHeight = the elevation on a wall that is seen from a pixel with the given altitude and azimuth (only above ground leve, i.e. (temp2 > 0)).
         # voxelHeight = wall height - descending wall, i.e. temp_wallHeight -
@@ -552,6 +579,7 @@ def shadowingfunction_findwallID(
     d = np.unique(c, axis=0)
     # Remove rows where both columns are zero
     d = d[~np.all(d == 0, axis=1)]
+
 
     not_in_list = 0
     in_list = 0

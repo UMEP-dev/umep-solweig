@@ -78,9 +78,7 @@ def clearnessindex_2013b(zen, jday, Ta, RH, radG, location, P):
     I0 = Itoa * np.cos(zen) * Trpg * Tw * D * Tar
     if abs(zen) > np.pi / 2:
         I0 = 0
-    # b=I0==abs(zen)>np.pi/2
-    # I0(b==1)=0
-    # clear b;
+
     if not (np.isreal(I0)):
         I0 = 0
 

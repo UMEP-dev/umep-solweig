@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-author = "xlinfr"
+author = "xlinfr and Lemap01"
 
 from . import sun_distance_torch
 import math

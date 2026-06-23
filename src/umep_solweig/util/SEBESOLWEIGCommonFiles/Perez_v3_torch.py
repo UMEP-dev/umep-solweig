@@ -6,6 +6,8 @@ try:
 except:
     pass
 
+author = "xlinfr and Lemap01"
+
 
 def Perez_v3(
     zen, azimuth, radD, radI, jday, patchchoice, patch_option, device

@@ -170,7 +170,6 @@ def Perez_v3(zen, azimuth, radD, radI, jday, patchchoice, patch_option):
     azimuth = azimuth * deg2rad
     altitude = altitude * deg2rad
     Idh = radD
-    # Ibh = radI/sin(altitude)
     Ibn = radI
 
     # Skyclearness
@@ -179,7 +178,6 @@ def Perez_v3(zen, azimuth, radD, radI, jday, patchchoice, patch_option):
     )
     # Extra terrestrial radiation
     day_angle = jday * 2 * np.pi / 365
-    # I0=1367*(1+0.033*np.cos((2*np.pi*jday)/365))
     I0 = 1367 * (
         1.00011
         + 0.034221 * np.cos(day_angle)
@@ -191,7 +189,6 @@ def Perez_v3(zen, azimuth, radD, radI, jday, patchchoice, patch_option):
     )
 
     # Optical air mass
-    # m=1/altitude; old
     if altitude >= 10 * deg2rad:
         AirMass = 1 / np.sin(altitude)
     elif altitude < 0:  # below equation becomes complex
@@ -204,10 +201,8 @@ def Perez_v3(zen, azimuth, radD, radI, jday, patchchoice, patch_option):
         )
 
     # Skybrightness
-    # if altitude*rad2deg+6.07995>=0
     PerezBrightness = (AirMass * radD) / I0
     if Idh <= 10:
-        # m_a=0;m_b=0;m_c=0;m_d=0;m_e=0;
         PerezBrightness = 0
 
     # sky clearness bins
@@ -283,12 +278,6 @@ def Perez_v3(zen, azimuth, radD, radI, jday, patchchoice, patch_option):
             + PerezBrightness * dcoeff[intClearness, 3] * PerezBrightness
         )
 
-    # print 'a = ', m_a
-    # print 'b = ', m_b
-    # print 'e = ', m_e
-    # print 'c = ', m_c
-    # print 'd = ', m_d
-
     if patchchoice == 2:
         skyvaultalt = np.atleast_2d([])
         skyvaultazi = np.atleast_2d([])
@@ -325,18 +314,8 @@ def Perez_v3(zen, azimuth, radD, radI, jday, patchchoice, patch_option):
     # Normalisation
     lv = lv / np.sum(lv)
 
-    # plotting
-    # axesm('stereo','Origin',[90 180],'MapLatLimit',[0 90],'Aspect','transverse')
-    # framem off; gridm on; mlabel off; plabel off;axis on;
-    # setm(gca,'MLabelParallel',-20)
-    # geoshow(skyvaultalt*rad2deg,skyvaultazi*rad2deg,lv,'DisplayType','texture');
-    # colorbar
-    # set(gcf,'Color',[1 1 1])
-    # pause(1)
 
     if patchchoice == 1:
-        # x = np.atleast_2d([])
-        # lv = np.transpose(np.append(np.append(np.append(x, skyvaultalt*rad2deg), skyvaultazi*rad2deg), lv))
         x = np.transpose(np.atleast_2d(skyvaultalt * rad2deg))
         y = np.transpose(np.atleast_2d(skyvaultazi * rad2deg))
         z = np.transpose(np.atleast_2d(lv))
