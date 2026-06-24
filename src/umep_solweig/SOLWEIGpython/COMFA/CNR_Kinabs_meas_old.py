@@ -18,8 +18,8 @@ def CNR_Kinabs_meas(
     *args,
     **kwargs
 ):
-    varargin = CNR_Kinabs_meas.varargin
-    nargin = CNR_Kinabs_meas.nargin
+    CNR_Kinabs_meas.varargin
+    CNR_Kinabs_meas.nargin
 
     # VERTICAL CYLINDER MODEL USING THE PERPENDICULAR DIRECT IRRADIANCE AND
     # DIFFUSE BEAMS SEPARATELY
@@ -50,7 +50,7 @@ def CNR_Kinabs_meas(
     Kd_abs = multiply(multiply(multiply((1 - alpha), Kd), 0.5), Acyl)
     # CNR_Kinabs_meas.m:23
 
-    Kin_abs = Kb_abs + Kd_abs
+    Kb_abs + Kd_abs
 
 
 # CNR_Kinabs_meas.m:25

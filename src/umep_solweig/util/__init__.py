@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 # __author__ = 'xlinfr'
-import traceback
 
 # The .egg packages shipped with QGIS sometimes appear before the user site dir
 # in sys.path. To make sure package versions we install with "--user" take precedence,

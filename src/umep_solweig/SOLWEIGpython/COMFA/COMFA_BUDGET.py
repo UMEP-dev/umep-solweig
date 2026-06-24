@@ -285,12 +285,12 @@ def COMFA_CONV(Mact, Ta, RH, vw, va, rco, weight, height, age, kid):
     if kid:
         # Body to surface area of kid
         BSA_k = weight**0.5378 * height**0.3964 * 0.0242
-        BMI_k = weight / (height / 100) ** 2
+        weight / (height / 100) ** 2
         # Body-to-surface area of adult (weight = 65 kg and height = 176 cm, according to Cheng & Brown, 2020)
         adult_weight = 65
         adult_height = 176
         BSA_a = adult_weight**0.5378 * adult_height**0.3964 * 0.0242
-        BMI_a = adult_weight / (adult_height / 100) ** 2
+        adult_weight / (adult_height / 100) ** 2
 
         CONV = (1212 * (Tsk - Ta) / (rc + ra)) * (
             (BSA_k / weight) / (BSA_a / adult_weight)

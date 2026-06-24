@@ -6,8 +6,8 @@ from libsmop import *
 
 @function
 def CRT_Acyl(L=None, D=None, *args, **kwargs):
-    varargin = CRT_Acyl.varargin
-    nargin = CRT_Acyl.nargin
+    CRT_Acyl.varargin
+    CRT_Acyl.nargin
 
     # Function written August 2009 by Jenni Vanos for calculating the Area of
     # the CRT for use in the CNR Comfa model for finidng Rabs.

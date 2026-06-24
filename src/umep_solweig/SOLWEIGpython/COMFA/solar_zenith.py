@@ -6,8 +6,6 @@ from libsmop import *
 
 @function
 def solar_zenith(lat=None, d=None, t=None, *args, **kwargs):
-    varargin = solar_zenith.varargin
-    nargin = solar_zenith.nargin
 
     # function to calculate the cosine of the zenith angle based on the time of day, the
     # latitude of the site and the time of year. t is in hours ranging from 0 to

@@ -3,7 +3,6 @@ import numpy as np
 
 def create_patches(patch_option):
 
-    deg2rad = np.pi / 180
 
     # patch_option = 1 = 145 patches (Robinson & Stone, 2004)
     # patch_option = 2 = 153 patches (Wallenberg et al., 2022)

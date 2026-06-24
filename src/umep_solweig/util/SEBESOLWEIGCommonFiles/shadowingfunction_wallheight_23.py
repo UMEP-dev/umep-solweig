@@ -125,7 +125,6 @@ def shadowingfunction_wallheight_23(
     f = np.copy(a)
     shvoveg = np.copy(vegdem)  # for vegetation shadowvolume
     # g = np.copy(sh)
-    wallbol = (walls > 0).astype(float)
 
     # other loop parameters
     pibyfour = np.pi / 4

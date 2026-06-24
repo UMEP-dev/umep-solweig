@@ -5,8 +5,7 @@ import numpy as np
 
 def model1(sky_patches, esky, Ta):
 
-    # Stefan-Boltzmann's Constant
-    SBC = 5.67051e-8
+
 
     # Degrees to radians
     deg2rad = np.pi / 180

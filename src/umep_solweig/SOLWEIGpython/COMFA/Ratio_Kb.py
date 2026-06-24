@@ -8,8 +8,7 @@ from libsmop import *
 def Ratio_Kb(
     Kin=None, A=None, lat=None, d=None, t=None, Atr=None, *args, **kwargs
 ):
-    varargin = Ratio_Kb.varargin
-    nargin = Ratio_Kb.nargin
+
 
     # function is used to estimate incoming shortwave diffuse radiation under
     # clear sky conditions with inputs A(alititude, m), lat(latitude, degrees),
@@ -17,7 +16,6 @@ def Ratio_Kb(
 
     m = opt_m(A, lat, d, t)
     # Ratio_Kb.m:8
-    Kb = Kin / ((1 + (multiply(0.3, (1 - Atr**m)))) / (Atr**m))
 
 
 # Ratio_Kb.m:10

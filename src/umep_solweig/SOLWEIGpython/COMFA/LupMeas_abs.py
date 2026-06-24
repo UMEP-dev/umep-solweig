@@ -6,8 +6,8 @@ from libsmop import *
 
 @function
 def LupMeas_abs(L=None, D=None, Lup=None, *args, **kwargs):
-    varargin = LupMeas_abs.varargin
-    nargin = LupMeas_abs.nargin
+    LupMeas_abs.varargin
+    LupMeas_abs.nargin
 
     # Used to calculate the estimated outgoing terrestrial longwave absorbed by the
     # cylinder  for use in the Rabs (Estimation) Model with inputs Ta (air temperature),
@@ -19,7 +19,7 @@ def LupMeas_abs(L=None, D=None, Lup=None, *args, **kwargs):
     epsilon = 0.95
     # LupMeas_abs.m:9
 
-    LupMeas_abs = multiply(multiply(multiply(epsilon, Lup), 0.5), Acyl)
+    multiply(multiply(multiply(epsilon, Lup), 0.5), Acyl)
 
 
 # LupMeas_abs.m:11

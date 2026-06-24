@@ -6,8 +6,7 @@ from libsmop import *
 
 @function
 def solar_ET(d=None, *args, **kwargs):
-    varargin = solar_ET.varargin
-    nargin = solar_ET.nargin
+
 
     # used to calculate the equation of time for use in calcuating the zenith
     # angle of the sun.

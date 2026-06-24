@@ -6,8 +6,8 @@ from libsmop import *
 
 @function
 def CRT_Acs(L=None, D=None, *args, **kwargs):
-    varargin = CRT_Acs.varargin
-    nargin = CRT_Acs.nargin
+    CRT_Acs.varargin
+    CRT_Acs.nargin
 
     # vertical cross sectional area of the cylinder in m
 
@@ -18,7 +18,7 @@ def CRT_Acs(L=None, D=None, *args, **kwargs):
     #
     # Used in Kb_abs = (1-alpha).* (Kb .* sind(zen)).* Acs;
 
-    Acs = multiply(D, L)
+    multiply(D, L)
 
 
 # CRT_Acs.m:13

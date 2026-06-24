@@ -130,7 +130,6 @@ def shadowingfunction_wallheight_23(
     ).to(torch.float64)  # vegetation shadow
     f = torch.clone(a)
     shvoveg = torch.clone(vegdem)  # for vegetation shadowvolume
-    wallbol = (walls > 0).float()
 
     # other loop parameters
     pibyfour = torch.pi / 4

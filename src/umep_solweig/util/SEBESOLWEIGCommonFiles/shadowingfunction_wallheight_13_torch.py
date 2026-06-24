@@ -103,7 +103,6 @@ def shadowingfunction_wallheight_13(
     dy = 0
     dz = 0
     temp = torch.zeros((sizex, sizey), device=device)
-    wallbol = (walls > 0).astype(float)
 
     # other loop parameters
     amaxvalue = torch.max(a)

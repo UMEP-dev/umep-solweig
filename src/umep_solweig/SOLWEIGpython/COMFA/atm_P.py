@@ -6,15 +6,15 @@ from libsmop import *
 
 @function
 def atm_P(A=None, *args, **kwargs):
-    varargin = atm_P.varargin
-    nargin = atm_P.nargin
+    atm_P.varargin
+    atm_P.nargin
 
     # Written by Jenni Vanos, Aug 2009 for use in COMFA CNR to find Rabs.
 
     Po = 101.3
     # atm_P.m:6
 
-    Pa = multiply(Po, exp(-A / 8200))
+    multiply(Po, exp(-A / 8200))
 
 
 # atm_P.m:9

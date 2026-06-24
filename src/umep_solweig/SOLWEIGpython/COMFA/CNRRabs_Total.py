@@ -20,8 +20,8 @@ def CNRRabs_Total(
     *args,
     **kwargs
 ):
-    varargin = CNRRabs_Total.varargin
-    nargin = CNRRabs_Total.nargin
+    CNRRabs_Total.varargin
+    CNRRabs_Total.nargin
 
     # VERTICAL CYLINDER MODEL
     # Used to calculate the total radiation absorbed by a cylinder, such as the CRT, with inputs

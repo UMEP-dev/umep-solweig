@@ -6,8 +6,8 @@ from libsmop import *
 
 @function
 def LinMeas_abs(L=None, D=None, Lin=None, *args, **kwargs):
-    varargin = LinMeas_abs.varargin
-    nargin = LinMeas_abs.nargin
+    LinMeas_abs.varargin
+    LinMeas_abs.nargin
 
     # Used to Calculate the incoming longwave radiation absorbed by the cylinder with
     # inputs epsilon (emissivity of the cylinder, 0.95), Ta (air temp, degreesC)
@@ -17,7 +17,7 @@ def LinMeas_abs(L=None, D=None, Lin=None, *args, **kwargs):
     # LinMeas_abs.m:7
     Acyl = CRT_Acyl(L, D)
     # LinMeas_abs.m:9
-    LinMeas_abs = multiply(multiply(multiply(epsilon, Lin), 0.5), Acyl)
+    multiply(multiply(multiply(epsilon, Lin), 0.5), Acyl)
 
 
 # LinMeas_abs.m:11

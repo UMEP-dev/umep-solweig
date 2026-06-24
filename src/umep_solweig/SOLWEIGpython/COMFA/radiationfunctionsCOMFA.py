@@ -73,8 +73,6 @@ def COMFA_RAD_SPATIAL_TC(
     Same as CNRRabs_Total but using reindl et al for Kd and sun_position.py
     """
 
-    deg2rad = np.pi / 180.0
-
     # location = {'longitude': lon, 'latitude': lat, 'altitude': alt}
     YYYY, altitude, azimuth, zen, jday, leafon, dectime, altmax = (
         metload.Solweig_2015a_metdata_noload(metdata, location, utc)
@@ -139,7 +137,6 @@ def Rad_Total_solweig(
     Same as CNRRabs_Total but using reindl et al for Kd and sun_position.py
     """
 
-    deg2rad = np.pi / 180.0
     metdata = np.zeros((1, 24)) - 999.0  # TODO: Move out of function
     # doy = day_of_year(yyyy, month, day)
     metdata[0, 0] = yyyy

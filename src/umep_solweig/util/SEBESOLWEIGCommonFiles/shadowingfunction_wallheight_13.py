@@ -98,7 +98,6 @@ def shadowingfunction_wallheight_13(
     dy = 0
     dz = 0
     temp = np.zeros((sizex, sizey))
-    wallbol = (walls > 0).astype(float)
 
     # other loop parameters
     amaxvalue = np.max(a)

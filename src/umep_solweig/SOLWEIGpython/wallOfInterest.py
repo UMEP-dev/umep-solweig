@@ -139,7 +139,6 @@ def fillWallOfInterest(
                 )
                 # Output file header
                 header = "yyyy id   it imin dectime Ta  SVF "
-                voxelHeader = ""
                 for temp_header in output_vars:
                     header += "    " + temp_header
                 # header = header + voxelHeader

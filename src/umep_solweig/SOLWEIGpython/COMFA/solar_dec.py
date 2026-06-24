@@ -6,8 +6,6 @@ from libsmop import *
 
 @function
 def solar_dec(d=None, *args, **kwargs):
-    varargin = solar_dec.varargin
-    nargin = solar_dec.nargin
 
     # written to calcuate the solar declination with ranges from +23.45 at
     # summer solstice to -23.45 at the winter solstice.  d is the calendar day
@@ -18,7 +16,6 @@ def solar_dec(d=None, *args, **kwargs):
 
     # dec = asind(sin_dec);
 
-    dec = dot(-23.4, cosd(dot(360, (d + 10)) / 365))
 
 
 # solar_dec.m:13

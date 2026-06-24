@@ -47,8 +47,6 @@ def Solweig_2015a_metdata_noload(inputdata, location, UTC):
     sunmax = dict()
 
     for i, row in enumerate(met[:, 0]):
-        if met[i, 1] == 221:
-            test = 4
         YMD = datetime.datetime(int(met[i, 0]), 1, 1) + datetime.timedelta(
             int(met[i, 1]) - 1
         )

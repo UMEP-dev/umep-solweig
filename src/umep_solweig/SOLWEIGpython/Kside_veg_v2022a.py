@@ -67,10 +67,6 @@ def Kside_veg_v2022a(
     Kref_sun_e = np.zeros((rows, cols))
     Kref_sun_w = np.zeros((rows, cols))
 
-    KeastRef = np.zeros((rows, cols))
-    KwestRef = np.zeros((rows, cols))
-    KnorthRef = np.zeros((rows, cols))
-    KsouthRef = np.zeros((rows, cols))
     diffRadE = np.zeros((rows, cols))
     diffRadS = np.zeros((rows, cols))
     diffRadW = np.zeros((rows, cols))

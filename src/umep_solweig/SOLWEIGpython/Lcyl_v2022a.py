@@ -29,8 +29,6 @@ def Lcyl_v2022a(
     # Stefan-Boltzmann's Constant
     SBC = 5.67051e-8
 
-    # Sky longwave radiation from emissivity based on Prata (1996)
-    Ldown_prata = esky * SBC * ((Ta + 273.15) ** 4)
 
     # Degrees to radians
     deg2rad = np.pi / 180

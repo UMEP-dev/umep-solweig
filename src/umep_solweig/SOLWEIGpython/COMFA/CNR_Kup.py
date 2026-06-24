@@ -6,8 +6,8 @@ from libsmop import *
 
 @function
 def CNR_Kup(alpha=None, Kup=None, L=None, D=None, *args, **kwargs):
-    varargin = CNR_Kup.varargin
-    nargin = CNR_Kup.nargin
+    CNR_Kup.varargin
+    CNR_Kup.nargin
 
     # Used to calculate the total reflected solar radiation (K) absorbed by the
     # a cylinder with inputs alpha (cylinder albedo), Kup (measured reflected solar
@@ -17,7 +17,7 @@ def CNR_Kup(alpha=None, Kup=None, L=None, D=None, *args, **kwargs):
     Acyl = CRT_Acyl(L, D)
     # CNR_Kup.m:8
 
-    Kup_abs = multiply(multiply(multiply((1 - alpha), Kup), 0.5), Acyl)
+    multiply(multiply(multiply((1 - alpha), Kup), 0.5), Acyl)
 
 
 # CNR_Kup.m:10
