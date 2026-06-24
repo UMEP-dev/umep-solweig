@@ -45,18 +45,12 @@ try:
     from osgeo import gdal
     from osgeo.gdalconst import *
     from ..util.misc import saveraster, xy2latlon_fromraster
-    from qgis.core import QgsVectorLayer, QgsRasterLayer
 except:
     pass
 
 # imports for standalone
 try:
-    from umep import common
-    from rasterio.transform import xy, rowcol
-    import pyproj
-    from tqdm import tqdm
-    import geopandas as gpd
-    from osgeo import osr, gdal
+    from osgeo import gdal
 except:
     pass
 
@@ -76,8 +70,6 @@ def solweig_run(configPath, feedback):
     with open(configDict["para_json_path"], "r") as jsn:
         param = json.load(jsn)
 
-    standAlone = int(configDict["standalone"])
-
     # reading variables from config and parameters that is not yet presented
     cyl = int(configDict["cyl"])
     albedo_b = param["Albedo"]["Effective"]["Value"]["Walls"]
@@ -89,15 +81,10 @@ def solweig_run(configPath, feedback):
 
     # Load DSM
     gdal_dsm = gdal.Open(configDict["filepath_dsm"])
-    dsm_wkt = QgsRasterLayer(configDict["filepath_dsm"]).crs().toWkt()
+    dsm_wkt = re.sub(r',?AXIS\["[^"]+",(?:NORTH|SOUTH|EAST|WEST)\]', '', gdal_dsm.GetProjection())
     lat, lon, scale, minx, miny = xy2latlon_fromraster(dsm_wkt, gdal_dsm)
     dsm = gdal_dsm.ReadAsArray().astype(float)
     nd = gdal_dsm.GetRasterBand(1).GetNoDataValue()
-    print("Latitude:", lat)
-    print("Longitude:", lon)
-    print("Scale (Pixel Size):", scale)
-    
-
 
     rows = dsm.shape[0]
     cols = dsm.shape[1]

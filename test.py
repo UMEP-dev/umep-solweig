@@ -133,12 +133,12 @@ print("-" * 60)
 #--- Mode CPU (Commenté comme dans l'original) ---
 monitor_cpu = ResourceMonitor(interval=0.1)
 monitor_cpu.start()
-print_progress_bar(0, iterations, prefix='Progression CPU')
-for i in range(iterations):
-    start_time = time.time()
-    mod_cpu.solweig_run(cpu_config_path, None)
-    cpu_results.append(time.time() - start_time)
-    print_progress_bar(i + 1, iterations, prefix='Progression CPU')
+# print_progress_bar(0, iterations, prefix='Progression CPU')
+# for i in range(iterations):
+#     start_time = time.time()
+#     mod_cpu.solweig_run(cpu_config_path, None)
+#     cpu_results.append(time.time() - start_time)
+#     print_progress_bar(i + 1, iterations, prefix='Progression CPU')
 monitor_cpu.stop()
 monitor_cpu.join()
 cpu_metrics = monitor_cpu.get_metrics()
@@ -156,12 +156,12 @@ cpu_metrics = {
 monitor_gpu = ResourceMonitor(interval=0.1)
 monitor_gpu.start()
 
-# print_progress_bar(0, iterations, prefix='Progression GPU')
-# for i in range(iterations):
-#     start_time = time.time()
-#     mod_gpu.solweig_run(gpu_config_path, None)
-#     gpu_results.append(time.time() - start_time)
-#     print_progress_bar(i + 1, iterations, prefix='Progression GPU')
+print_progress_bar(0, iterations, prefix='Progression GPU')
+for i in range(iterations):
+    start_time = time.time()
+    mod_gpu.solweig_run(gpu_config_path, None)
+    gpu_results.append(time.time() - start_time)
+    print_progress_bar(i + 1, iterations, prefix='Progression GPU')
 
 monitor_gpu.stop()
 monitor_gpu.join()

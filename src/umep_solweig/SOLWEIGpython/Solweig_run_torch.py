@@ -46,17 +46,13 @@ try:
     from osgeo import gdal
     from osgeo.gdalconst import *
     from ..util.misc import saveraster, xy2latlon_fromraster
-    from qgis.core import QgsRasterLayer
 except:
     pass
 
 # imports for standalone
 try:
-    from umep import common
-    from rasterio.transform import xy, rowcol
-    import pyproj
-    from tqdm import tqdm
-    import geopandas as gpd
+    from osgeo import gdal
+    import re
 except:
     pass
 
@@ -77,17 +73,7 @@ def solweig_run(configPath, feedback):
     # Load parameters settings for SOLWEIG
     with open(configDict["para_json_path"], "r") as jsn:
         param = json.load(jsn)
-
-    # reading variables from config and parameters that is not yet presented
-    standAlone = int(configDict["standalone"])
-    cyl = int(configDict["cyl"])
-    albedo_b = param["Albedo"]["Effective"]["Value"]["Walls"]
-    ewall = param["Emissivity"]["Value"]["Walls"]
-    onlyglobal = int(configDict["onlyglobal"])
-    elvis = 0.0
-    absK = param["Tmrt_params"]["Value"]["absK"]
-    absL = param["Tmrt_params"]["Value"]["absL"]
-
+        
     # --- Load on CPU or GPU config
     device = torch.device("cpu")
     if torch.cuda.is_available():
@@ -109,12 +95,19 @@ def solweig_run(configPath, feedback):
         print(
             "PyTorch found but compatible GPU not found. Initiating CPU mode..."
         )
-    standAlone = int(configDict["standalone"])
+
+    # reading variables from config and parameters that is not yet presented
+    cyl = int(configDict["cyl"])
+    albedo_b = param["Albedo"]["Effective"]["Value"]["Walls"]
+    ewall = param["Emissivity"]["Value"]["Walls"]
+    onlyglobal = int(configDict["onlyglobal"])
+    elvis = 0.0
+    absK = param["Tmrt_params"]["Value"]["absK"]
+    absL = param["Tmrt_params"]["Value"]["absL"]
 
     # Load DSM
     gdal_dsm = gdal.Open(configDict["filepath_dsm"])
-    trf_arr = list(gdal_dsm.GetGeoTransform())
-    dsm_wkt = gdal_dsm.GetProjection()
+    dsm_wkt = re.sub(r',?AXIS\["[^"]+",(?:NORTH|SOUTH|EAST|WEST)\]', '', gdal_dsm.GetProjection())
     lat, lon, scale, minx, miny = xy2latlon_fromraster(dsm_wkt, gdal_dsm)
     dsm = torch.from_numpy(gdal_dsm.ReadAsArray().astype(float)).to(device)
     nd = gdal_dsm.GetRasterBand(1).GetNoDataValue()
@@ -146,18 +139,12 @@ def solweig_run(configPath, feedback):
         ).to(device)
 
         if configDict["filepath_tdsm"] != "":
-            if standAlone == 0:
-                vegdsm2 = torch.from_numpy(
-                    (
-                        gdal.Open(configDict["filepath_tdsm"])
-                        .ReadAsArray()
-                        .astype(float)
-                    )
-                ).to(device)
-            else:
-                vegdsm2, _, _ = common.load_raster(
-                    configDict["filepath_tdsm"], bbox=None
-                )
+            vegdsm2 = torch.from_numpy(
+                gdal.Open(configDict["filepath_tdsm"])
+                .ReadAsArray()
+                .astype(float)
+            ).to(device)
+
         else:
             vegdsm2 = vegdsm * trunkratio
     else:
@@ -169,15 +156,14 @@ def solweig_run(configPath, feedback):
         torch.cuda.empty_cache()
     elif device.type == "xpu":
         torch.xpu.empty_cache()
+        
     # Land cover
     landcover = int(configDict["landcover"])
     if landcover == 1:
         lcgrid = torch.from_numpy(
-            (
-                gdal.Open(configDict["filepath_lc"])
-                .ReadAsArray()
-                .astype(float)
-            )
+            gdal.Open(configDict["filepath_lc"])
+            .ReadAsArray()
+            .astype(float)
         ).to(device)
 
     else:
@@ -188,12 +174,9 @@ def solweig_run(configPath, feedback):
     if demforbuild == 1:
         gdal_dem = gdal.Open(
             configDict["filepath_dem"]
-        )  # .ReadAsArray().astype(float)
-        dem = torch.from_numpy(gdal_dem.ReadAsArray().astype(float)).to(
-            device
         )
+        dem = gdal_dem.ReadAsArray().astype(float)
         nd = gdal_dem.GetRasterBand(1).GetNoDataValue()
-
 
         # response to issue and #230
         dem[dem == nd] = 0.0
@@ -208,118 +191,92 @@ def solweig_run(configPath, feedback):
         torch.cuda.empty_cache()
     elif device.type == "xpu":
         torch.xpu.empty_cache()
+        
     # SVF
     zip = zipfile.ZipFile(configDict["input_svf"], "r")
     zip.extractall(configDict["working_dir"])
     zip.close()
 
     svf = torch.from_numpy(
-        (
-            gdal.Open(configDict["working_dir"] + "/svf.tif")
-            .ReadAsArray()
-            .astype(float)
-        )
+        gdal.Open(configDict["working_dir"] + "/svf.tif")
+        .ReadAsArray()
+        .astype(float)
     ).to(device)
-    svfN = torch.from_numpy(
-        (
+    svfN = (
+        torch.from_numpy(
             gdal.Open(configDict["working_dir"] + "/svfN.tif")
             .ReadAsArray()
             .astype(float)
-        )
-    ).to(device)
+        ).to(device)
+    )
     svfS = torch.from_numpy(
-        (
-            gdal.Open(configDict["working_dir"] + "/svfS.tif")
-            .ReadAsArray()
-            .astype(float)
-        )
+        gdal.Open(configDict["working_dir"] + "/svfS.tif")
+        .ReadAsArray()
+        .astype(float)
     ).to(device)
     svfE = torch.from_numpy(
-        (
-            gdal.Open(configDict["working_dir"] + "/svfE.tif")
-            .ReadAsArray()
-            .astype(float)
-        )
+        gdal.Open(configDict["working_dir"] + "/svfE.tif")
+        .ReadAsArray()
+        .astype(float)
     ).to(device)
     svfW = torch.from_numpy(
-        (
-            gdal.Open(configDict["working_dir"] + "/svfW.tif")
-            .ReadAsArray()
-            .astype(float)
-        )
+        gdal.Open(configDict["working_dir"] + "/svfW.tif")
+        .ReadAsArray()
+        .astype(float)
     ).to(device)
+
 
     if usevegdem == 1:
         svfveg = torch.from_numpy(
-            (
-                gdal.Open(configDict["working_dir"] + "/svfveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
+            gdal.Open(configDict["working_dir"] + "/svfveg.tif")
+            .ReadAsArray()
+            .astype(float)
         ).to(device)
         svfNveg = torch.from_numpy(
-            (
-                gdal.Open(configDict["working_dir"] + "/svfNveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
+            gdal.Open(configDict["working_dir"] + "/svfNveg.tif")
+            .ReadAsArray()
+            .astype(float)
         ).to(device)
         svfSveg = torch.from_numpy(
-            (
-                gdal.Open(configDict["working_dir"] + "/svfSveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
+            gdal.Open(configDict["working_dir"] + "/svfSveg.tif")
+            .ReadAsArray()
+            .astype(float)
         ).to(device)
         svfEveg = torch.from_numpy(
-            (
-                gdal.Open(configDict["working_dir"] + "/svfEveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
+            gdal.Open(configDict["working_dir"] + "/svfEveg.tif")
+            .ReadAsArray()
+            .astype(float)
         ).to(device)
         svfWveg = torch.from_numpy(
-            (
-                gdal.Open(configDict["working_dir"] + "/svfWveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
+            gdal.Open(configDict["working_dir"] + "/svfWveg.tif")
+            .ReadAsArray()
+            .astype(float)
         ).to(device)
 
         svfaveg = torch.from_numpy(
-            (
-                gdal.Open(configDict["working_dir"] + "/svfaveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
+            gdal.Open(configDict["working_dir"] + "/svfaveg.tif")
+            .ReadAsArray()
+            .astype(float)
         ).to(device)
         svfNaveg = torch.from_numpy(
-            (
-                gdal.Open(configDict["working_dir"] + "/svfNaveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
+            gdal.Open(configDict["working_dir"] + "/svfNaveg.tif")
+            .ReadAsArray()
+            .astype(float)
         ).to(device)
         svfSaveg = torch.from_numpy(
-            (
-                gdal.Open(configDict["working_dir"] + "/svfSaveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
+            gdal.Open(configDict["working_dir"] + "/svfSaveg.tif")
+            .ReadAsArray()
+            .astype(float)
         ).to(device)
         svfEaveg = torch.from_numpy(
-            (
-                gdal.Open(configDict["working_dir"] + "/svfEaveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
+            gdal.Open(configDict["working_dir"] + "/svfEaveg.tif")
+            .ReadAsArray()
+            .astype(float)
         ).to(device)
         svfWaveg = torch.from_numpy(
-            (
-                gdal.Open(configDict["working_dir"] + "/svfWaveg.tif")
-                .ReadAsArray()
-                .astype(float)
-            )
+            gdal.Open(configDict["working_dir"] + "/svfWaveg.tif")
+            .ReadAsArray()
+            .astype(float)
         ).to(device)
 
     else:
@@ -339,28 +296,28 @@ def solweig_run(configPath, feedback):
         torch.cuda.empty_cache()
     elif device.type == "xpu":
         torch.xpu.empty_cache()
+        
     tmp = svf + svfveg - 1.0
     tmp[tmp < 0.0] = 0.0
     # %matlab crazyness around 0
     svfalfa = torch.arcsin(torch.exp((torch.log((1.0 - tmp)) / 2.0)))
 
     wallheight = torch.from_numpy(
-        (gdal.Open(configDict["filepath_wh"]).ReadAsArray().astype(float))
+        gdal.Open(configDict["filepath_wh"]).ReadAsArray().astype(float)
     ).to(device)
     wallaspect = torch.from_numpy(
-        (gdal.Open(configDict["filepath_wa"]).ReadAsArray().astype(float))
+        gdal.Open(configDict["filepath_wa"]).ReadAsArray().astype(float)
     ).to(device)
+
 
     # Metdata
     headernum = 1
     delim = " "
     Twater = []
 
-    metdata = torch.from_numpy(
-        np.loadtxt(
-            configDict["input_met"], skiprows=headernum, delimiter=delim
-        )
-    ).to(device)
+    metdata = torch.from_numpy(np.loadtxt(
+        configDict["input_met"], skiprows=headernum, delimiter=delim
+    )).to(device)
 
     location = {"longitude": lon, "latitude": lat, "altitude": alt}
     YYYY, altitude, azimuth, zen, jday, leafon, dectime, altmax = (
@@ -386,9 +343,7 @@ def solweig_run(configPath, feedback):
             "I0     CI   Shadow  SVF_b  SVF_bv  KsideI   PET UTCI  CI_TgG  KsideD  Lside   diffDown    Kside  "
         )
         # poiname = []
-        poi_field = configDict[
-            "poi_field"
-        ]  # self.parameterAsString(parameters, self.POI_FIELD, context)
+        poi_field = configDict["poi_field"]
 
         poi_field = configDict[
             "woi_field"
@@ -398,22 +353,17 @@ def solweig_run(configPath, feedback):
         )
 
 
-
         for k in range(0, poisxy.shape[0]):
             poi_save = []  # torch.zeros((1, 33))
             data_out = (
                 configDict["output_dir"] + "/POI_" + str(poiname[k]) + ".txt"
             )
             np.savetxt(
-                data_out,
-                (
+                data_out, (
                     poi_save.cpu().numpy()
                     if isinstance(poi_save, torch.Tensor)
                     else poi_save
-                ),
-                delimiter=" ",
-                header=header,
-                comments="",
+                ), delimiter=" ", header=header, comments=""
             )
 
         # Num format for POI output
@@ -434,17 +384,13 @@ def solweig_run(configPath, feedback):
     if param["Tmrt_params"]["Value"]["posture"] == "Standing":
         Fside = param["Posture"]["Standing"]["Value"]["Fside"]
         Fup = param["Posture"]["Standing"]["Value"]["Fup"]
-        height = torch.tensor(
-            param["Posture"]["Standing"]["Value"]["height"]
-        ).to(device)
+        height = torch.tensor(param["Posture"]["Standing"]["Value"]["height"], device=device)
         Fcyl = param["Posture"]["Standing"]["Value"]["Fcyl"]
         pos = 1
     else:
         Fside = param["Posture"]["Sitting"]["Value"]["Fside"]
         Fup = param["Posture"]["Sitting"]["Value"]["Fup"]
-        height = torch.tensor(
-            param["Posture"]["Sitting"]["Value"]["height"]
-        ).to(device)
+        height = torch.tensor(param["Posture"]["Sitting"]["Value"]["height"], device=device)
         Fcyl = param["Posture"]["Sitting"]["Value"]["Fcyl"]
         pos = 0
 
@@ -457,9 +403,9 @@ def solweig_run(configPath, feedback):
     if usevegdem == 1:
         # Conifer or deciduous
         if configDict["conifer_bool"]:
-            leafon = torch.ones((1, DOY.shape[0])).to(device)
+            leafon = torch.ones((1, DOY.shape[0]), device=device)
         else:
-            leafon = torch.zeros((1, DOY.shape[0])).to(device)
+            leafon = torch.zeros((1, DOY.shape[0]), device=device)
             if (
                 param["Tree_settings"]["Value"]["First_day_leaf"]
                 > param["Tree_settings"]["Value"]["Last_day_leaf"]
@@ -496,7 +442,7 @@ def solweig_run(configPath, feedback):
     else:
         psi = leafon * 0.0 + 1.0
         svfbuveg = svf
-        bush = torch.zeros([rows, cols]).to(device)
+        bush = torch.zeros([rows, cols], device=device)
         amaxvalue = 0
 
     # Clean up vegetation processing tensors
@@ -504,17 +450,18 @@ def solweig_run(configPath, feedback):
         torch.cuda.empty_cache()
     elif device.type == "xpu":
         torch.xpu.empty_cache()
+        
     # Initialization of maps
-    Knight = torch.zeros((rows, cols)).to(device)
-    Tgmap1 = torch.zeros((rows, cols)).to(device)
-    Tgmap1E = torch.zeros((rows, cols)).to(device)
-    Tgmap1S = torch.zeros((rows, cols)).to(device)
-    Tgmap1W = torch.zeros((rows, cols)).to(device)
-    Tgmap1N = torch.zeros((rows, cols)).to(device)
+    Knight = torch.zeros((rows, cols), device=device)
+    Tgmap1 = torch.zeros((rows, cols), device=device)
+    Tgmap1E = torch.zeros((rows, cols), device=device)
+    Tgmap1S = torch.zeros((rows, cols), device=device)
+    Tgmap1W = torch.zeros((rows, cols), device=device)
+    Tgmap1N = torch.zeros((rows, cols), device=device)
 
     # Create building boolean raster from either land cover or height rasters
     if demforbuild == 0:
-        buildings = lcgrid.clone()
+        buildings = torch.clone(lcgrid)
         buildings[buildings == 7] = 1
         buildings[buildings == 6] = 1
         buildings[buildings == 5] = 1
@@ -537,14 +484,12 @@ def solweig_run(configPath, feedback):
     # Import shadow matrices (Anisotropic sky)
     anisotropic_sky = int(configDict["aniso"])
     if anisotropic_sky == 1:  # UseAniso
-        data = torch.load(
-            configDict["input_aniso"], map_location=device, weights_only=True
-        )
+        data = torch.load(configDict["input_aniso"])
         shmat = data["shadowmat"]
         vegshmat = data["vegshadowmat"]
         vbshvegshmat = data["vbshmat"]
         if usevegdem == 1:
-            diffsh = torch.zeros((rows, cols, shmat.shape[2])).to(device)
+            diffsh = torch.zeros((rows, cols, shmat.shape[2]), device=device)
             for i in range(0, shmat.shape[2]):
                 diffsh[:, :, i] = shmat[:, :, i] - (1 - vegshmat[:, :, i]) * (
                     1 - transVeg
@@ -566,7 +511,7 @@ def solweig_run(configPath, feedback):
         asvf = torch.arccos(torch.sqrt(svf))
 
         # Empty array for steradians
-        steradians = torch.zeros((shmat.shape[2])).to(device)
+        steradians = torch.zeros((shmat.shape[2]), device=device)
     else:
         # anisotropic_sky = 0
         diffsh = None
@@ -576,7 +521,7 @@ def solweig_run(configPath, feedback):
         asvf = None
         patch_option = 0
         steradians = 0
-    shadow = torch.zeros_like(dsm).to(device)
+    shadow = torch.zeros_like(dsm, device=device)
 
     # % Ts parameterisation maps
     if landcover == 1.0:
@@ -625,7 +570,7 @@ def solweig_run(configPath, feedback):
                 a2_grid,
                 a3_grid,
             ) = initiate_groundScheme(
-                lcgrid.copy(), param, DOY[0], Ta, location, device
+                lcgrid.clone(), param, DOY[0], Ta, location
             )
         else:
             (
@@ -651,49 +596,41 @@ def solweig_run(configPath, feedback):
     # Import data for wall temperature parameterization TODO: fix for standalone
     wallScheme = int(configDict["wallscheme"])
     if wallScheme == 1:
-        wallData = torch.load(
-            configDict["input_wall"], map_location=device, weights_only=True
-        )
+        wallData = np.load(configDict["input_wall"])
         voxelMaps = wallData["voxelId"]
         voxelTable = wallData["voxelTable"]
         # Get wall type from standalone
-        if standAlone == 1:
-            wall_type_standalone = {
-                "Brick_wall": "100",
-                "Concrete_wall": "101",
-                "Wood_wall": "102",
-            }
-            wall_type = wall_type_standalone[configDict["walltype"]]
-        else:
-            # Get wall type set in GUI
-            wall_type = configDict[
-                "walltype"
-            ]  # str(100 + int(self.parameterAsString(parameters, self.WALL_TYPE, context))) #TODO
+        wall_type_standalone = {
+            "Brick": "100",
+            "Brick_wall": "100",
+            "Concrete_wall": "101",
+            "Concrete": "101",
+            "Wood_wall": "102",
+            "Wood": "102",
+        }
+        wall_type = wall_type_standalone[configDict["walltype"]]
 
         # Calculate wall height for wall scheme, i.e. include corners (thicker walls)
         walls_scheme = wa.findwalls_sp(
-            dsm,
-            2,
-            device,
-            torch.tensor([[1, 1, 1], [1, 0, 1], [1, 1, 1]]).to(device),
+            dsm, 2, torch.tensor([[1, 1, 1], [1, 0, 1], [1, 1, 1]], device=device)
         )
         # Calculate wall aspect for wall scheme, i.e. include corners (thicker walls)
         dirwalls_scheme = wa.filter1Goodwin_as_aspect_v3(
-            walls_scheme.copy(), scale, dsm, feedback, 100.0 / 180.0, device
+            walls_scheme.clone(), scale, dsm, feedback, 100.0 / 180.0, device
         )
 
         # Used in wall temperature parameterization scheme
         first_timestep = (
-            pd.to_datetime(int(YYYY[0][0].item()), format="%Y")
-            + pd.to_timedelta(DOY[0].item() - 1, unit="d")
-            + pd.to_timedelta(hours[0].item(), unit="h")
-            + pd.to_timedelta(minu[0].item(), unit="m")
+            pd.to_datetime(YYYY[0][0], format="%Y")
+            + pd.to_timedelta(DOY[0] - 1, unit="d")
+            + pd.to_timedelta(hours[0], unit="h")
+            + pd.to_timedelta(minu[0], unit="m")
         )
         second_timestep = (
-            pd.to_datetime(int(YYYY[0][1].item()), format="%Y")
-            + pd.to_timedelta(DOY[1].item() - 1, unit="d")
-            + pd.to_timedelta(hours[1].item(), unit="h")
-            + pd.to_timedelta(minu[1].item(), unit="m")
+            pd.to_datetime(YYYY[0][1], format="%Y")
+            + pd.to_timedelta(DOY[1] - 1, unit="d")
+            + pd.to_timedelta(hours[1], unit="h")
+            + pd.to_timedelta(minu[1], unit="m")
         )
 
         timeStep = (second_timestep - first_timestep).seconds
@@ -739,15 +676,15 @@ def solweig_run(configPath, feedback):
         voxelMaps = 0
         voxelTable = 0
         timeStep = 0
-        # thermal_effusivity = 0
-        walls_scheme = torch.ones((rows, cols)).to(device) * 10.0
-        dirwalls_scheme = torch.ones((rows, cols)).to(device) * 10.0
+        walls_scheme = torch.ones((rows, cols), device=device) * 10.0
+        dirwalls_scheme = torch.ones((rows, cols), device=device) * 10.0
 
     # Clean up wall scheme setup tensors
     if device.type == "cuda":
         torch.cuda.empty_cache()
     elif device.type == "xpu":
         torch.xpu.empty_cache()
+        
     # Initialisation of time related variables
     if Ta.__len__() == 1:
         timestepdec = 0
@@ -767,21 +704,16 @@ def solweig_run(configPath, feedback):
     CI = 1.0
 
     # Main loop
-    tmrtplot = torch.zeros((rows, cols)).to(device)
+    tmrtplot = torch.zeros((rows, cols), device=device)
 
     # Initiate array for I0 values
     if torch.unique(DOY).shape[0] > 1:
         unique_days = torch.unique(DOY)
         first_unique_day = DOY[DOY == unique_days[0]]
-        I0_array = torch.zeros((first_unique_day.shape[0])).to(device)
+        I0_array = torch.zeros((first_unique_day.shape[0]), device=device)
     else:
         first_unique_day = DOY.clone()
-        I0_array = torch.zeros((DOY.shape[0])).to(device)
-
-    if standAlone == 1:
-        progress = tqdm(total=Ta.__len__())
-    else:
-        progress = None
+        I0_array = torch.zeros((DOY.shape[0]), device=device)
 
     for i in torch.arange(0, Ta.__len__()):
         if feedback is not None:
@@ -791,8 +723,6 @@ def solweig_run(configPath, feedback):
             if feedback.isCanceled():
                 feedback.setProgressText("Calculation cancelled")
                 break
-        elif progress is not None:
-            progress.update(1)
 
         # Daily water body temperature
         if landcover == 1:
@@ -821,18 +751,17 @@ def solweig_run(configPath, feedback):
 
         # Timestep of the simulation used in the ground scheme calculation
         first_timestep = (
-            pd.to_datetime(int(YYYY[0][0].item()), format="%Y")
+            pd.to_datetime(YYYY[0][0].item(), format="%Y")
             + pd.to_timedelta(DOY[0].item() - 1, unit="d")
             + pd.to_timedelta(hours[0].item(), unit="h")
             + pd.to_timedelta(minu[0].item(), unit="m")
         )
         second_timestep = (
-            pd.to_datetime(int(YYYY[0][1].item()), format="%Y")
+            pd.to_datetime(YYYY[0][1].item(), format="%Y")
             + pd.to_timedelta(DOY[1].item() - 1, unit="d")
             + pd.to_timedelta(hours[1].item(), unit="h")
             + pd.to_timedelta(minu[1].item(), unit="m")
         )
-
         timeStep = (second_timestep - first_timestep).seconds
 
         (
@@ -1012,7 +941,7 @@ def solweig_run(configPath, feedback):
         # Write to POIs
         if not poisxy is None:
             for k in range(0, poisxy.shape[0]):
-                poi_save = torch.zeros((1, 40)).to(device)
+                poi_save = torch.zeros((1, 40), device=device)
                 poi_save[0, 0] = YYYY[0][i]
                 poi_save[0, 1] = jday[0][i]
                 poi_save[0, 2] = hours[i]
@@ -1100,6 +1029,7 @@ def solweig_run(configPath, feedback):
             torch.cuda.empty_cache()
         elif device.type == "xpu":
             torch.xpu.empty_cache()
+            
         # If wall temperature parameterization scheme is in use
         if (
             configDict["wallscheme"] == 1
@@ -1137,12 +1067,9 @@ def solweig_run(configPath, feedback):
                     ].to_numpy()
                     temp_all = torch.concatenate(
                         [temp_wall, K_in, L_in, wallShade]
-                    ).to(device)
-                    # temp_all = torch.concatenate([temp_wall])
-                    # wall_data = torch.zeros((1, 7 + temp_wall.shape[0]))
-                    wall_data = torch.zeros((1, 7 + temp_all.shape[0])).to(
-                        device
                     )
+                    # temp_all = torch.concatenate([temp_wall])
+                    wall_data = torch.zeros((1, 7 + temp_all.shape[0]), device=device)
                     # Part of file name (wallid), i.e. WOI_wallid.txt
                     data_out = (
                         configDict["output_dir"]
@@ -1187,21 +1114,19 @@ def solweig_run(configPath, feedback):
                     )
                     # Open file, add data, save
                     f_handle = open(data_out, "ab")
-                    np.savetxt(
-                        f_handle,
-                        (
+                    np.savetxt(f_handle, (
                             wall_data.cpu().numpy()
                             if isinstance(wall_data, torch.Tensor)
                             else wall_data
-                        ),
-                        fmt=woi_numformat,
-                    )
+                        ), fmt=woi_numformat)
                     f_handle.close()
+                    
                     del wall_data, temp_all  # Clean up wall data tensors
                     if device.type == "cuda":
                         torch.cuda.empty_cache()
                     elif device.type == "xpu":
                         torch.xpu.empty_cache()
+                        
             # Save wall temperature/radiation as NetCDF TODO: fix for standAlone?
             if configDict["wallnetcdf"] == "1":  # wallNetCDF:
                 netcdf_output = configDict["outputDir"] + "/walls.nc"
@@ -1393,9 +1318,9 @@ def solweig_run(configPath, feedback):
                     alt,
                     patch_option,
                 ]
-            ]
-        ).to(device)
-
+            ], device=device
+        )
+        # print(settingsData)
         np.savetxt(
             configDict["output_dir"] + "/treeplantersettings.txt",
             (
@@ -1417,9 +1342,7 @@ def solweig_run(configPath, feedback):
         tmrtplot / Ta.__len__()
     )  # fix average Tmrt instead of sum, 20191022
     saveraster(
-        gdal_dsm,
-        configDict["output_dir"] + "/Tmrt_average.tif",
-        tmrtplot.detach().cpu().numpy(),
+        gdal_dsm, configDict["output_dir"] + "/Tmrt_average.tif", tmrtplot.detach().cpu().numpy()
     )
 
 
