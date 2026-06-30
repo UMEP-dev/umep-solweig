@@ -25,6 +25,9 @@ share/python-wheels/
 .installed.cfg
 *.egg
 MANIFEST
+solweig_global_comparison.png
+solweig_gpu_resource_profile.png
+
 
 # PyInstaller
 #   Usually these files are written by a python script from a template

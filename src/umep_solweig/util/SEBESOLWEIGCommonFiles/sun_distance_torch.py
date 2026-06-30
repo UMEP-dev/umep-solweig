@@ -1,4 +1,4 @@
-__author__ = "xlinfr"
+__author__ = "xlinfr & Lemap01"
 try:
     import torch
 except:
