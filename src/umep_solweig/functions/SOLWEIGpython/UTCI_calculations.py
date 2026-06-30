@@ -319,9 +319,6 @@ def utci_calculator_grid(Ta, RH, Tmrt, va10m, feedback):
 
         # Start UTCI approximation
         for iy in np.arange(rows):
-            if feedback.isCanceled():
-                feedback.setProgressText("Calculation cancelled")
-                break
             for ix in np.arange(cols):
 
                 D_Tmrt = Tmrt[iy, ix] - Ta
@@ -338,6 +335,5 @@ def utci_calculator_grid(Ta, RH, Tmrt, va10m, feedback):
 
                 # Progress counter
                 index = index + 1
-                feedback.setProgress(int(index * total))
 
     return UTCI_approx

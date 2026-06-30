@@ -5,16 +5,16 @@
 from __future__ import absolute_import
 
 from .daylen_torch import daylen
-from ..util.SEBESOLWEIGCommonFiles.clearnessindex_2013b_torch import (
+from ...util.SEBESOLWEIGCommonFiles.clearnessindex_2013b_torch import (
     clearnessindex_2013b,
 )
-from ..util.SEBESOLWEIGCommonFiles.diffusefraction_torch import (
+from ...util.SEBESOLWEIGCommonFiles.diffusefraction_torch import (
     diffusefraction,
 )
-from ..util.SEBESOLWEIGCommonFiles.shadowingfunction_wallheight_13_torch import (
+from ...util.SEBESOLWEIGCommonFiles.shadowingfunction_wallheight_13_torch import (
     shadowingfunction_wallheight_13,
 )
-from ..util.SEBESOLWEIGCommonFiles.shadowingfunction_wallheight_23_torch import (
+from ...util.SEBESOLWEIGCommonFiles.shadowingfunction_wallheight_23_torch import (
     shadowingfunction_wallheight_23,
 )
 from .gvf_2018a import gvf_2018a
@@ -24,8 +24,8 @@ from .Kup_veg_2015a_torch import Kup_veg_2015a
 
 
 from .Kside_veg_v2022a_torch import Kside_veg_v2022a
-from ..util.SEBESOLWEIGCommonFiles.Perez_v3_torch import Perez_v3
-from ..util.SEBESOLWEIGCommonFiles.create_patches_torch import create_patches
+from ...util.SEBESOLWEIGCommonFiles.Perez_v3_torch import Perez_v3
+from ...util.SEBESOLWEIGCommonFiles.create_patches_torch import create_patches
 
 # Anisotropic longwave
 from .Lside_veg_torch import Lside_veg_v2022a, Lside_veg_v2026

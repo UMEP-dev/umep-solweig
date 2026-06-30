@@ -1,15 +1,15 @@
 import datetime as dt
 from builtins import range
 
-from .util import shadowingfunctions as shadow
-from .util.SEBESOLWEIGCommonFiles.shadowingfunction_wallheight_13 import (
+from ..util import shadowingfunctions as shadow
+from ..util.SEBESOLWEIGCommonFiles.shadowingfunction_wallheight_13 import (
     shadowingfunction_wallheight_13,
 )
-from .util.SEBESOLWEIGCommonFiles.shadowingfunction_wallheight_23 import (
+from ..util.SEBESOLWEIGCommonFiles.shadowingfunction_wallheight_23 import (
     shadowingfunction_wallheight_23,
 )
-from .util.misc import saveraster
-from .util.SEBESOLWEIGCommonFiles import sun_position as sp
+from ..util.misc import saveraster
+from ..util.SEBESOLWEIGCommonFiles import sun_position as sp
 import numpy as np
 
 
@@ -81,9 +81,7 @@ def dailyshading(
         dirwalls = np.zeros((sizex, sizey))
 
     for i in range(0, itera):
-        if feedback.isCanceled():
-            feedback.setProgressText("Calculation cancelled")
-            break
+
         if onetime == 0:
             minu = int(timeInterval * i)
             if minu >= 60:
@@ -111,7 +109,6 @@ def dailyshading(
             ut_time = ut_time + doy - 1
 
         HHMMSS = dectime_to_timevec(ut_time)
-        # feedback.setProgressText('HHMMSS:' + str(HHMMSS))
         time["year"] = year
         time["month"] = month
         time["day"] = day
@@ -136,7 +133,6 @@ def dailyshading(
             year, month, day, time["hour"], time["min"], time["sec"]
         )
         timestr = time_vector.strftime("%Y%m%d_%H%M")
-        # feedback.setProgressText('timestr:' + str(timestr))
         if alt[i] > 0:
             if wallshadow == 1:  # Include wall shadows (Issue #121)
                 if usevegdem == 1:

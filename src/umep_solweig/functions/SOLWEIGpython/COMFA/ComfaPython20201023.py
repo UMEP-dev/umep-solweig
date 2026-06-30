@@ -6,8 +6,8 @@ Translated on Fri Oct 23
 @author: xlinfr
 """
 
-from radiationfunctionsCOMFA import CNRRabs_Total
-from radiationfunctionsCOMFA import Rad_Total_solweig
+from umep_solweig.functions.SOLWEIGpython.COMFA.radiationfunctionsCOMFA import CNRRabs_Total
+from umep_solweig.functions.SOLWEIGpython.COMFA.radiationfunctionsCOMFA import Rad_Total_solweig
 import numpy as np
 
 # Radiation components in w m-2

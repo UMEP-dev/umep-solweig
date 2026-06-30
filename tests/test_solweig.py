@@ -20,7 +20,7 @@ except ImportError:
     print("Error: 'psutil' library is required. Install it using 'pip install psutil'")
     sys.exit(1)
 
-base = Path(__file__).resolve().parent
+base = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(base / "src"))
 import umep_solweig
 

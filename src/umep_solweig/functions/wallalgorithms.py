@@ -64,14 +64,11 @@ def findwalls(a, walllimit, feedback, total):
     domain = np.array([[0, 1, 0], [1, 0, 1], [0, 1, 0]])
     index = 0
     for i in np.arange(1, row - 1):
-        if feedback.isCanceled():
-            feedback.setProgressText("Calculation cancelled")
-            break
+
         for j in np.arange(1, col - 1):
             dom = a[j - 1 : j + 2, i - 1 : i + 2]
             walls[j, i] = np.max(dom[np.where(domain == 1)])  # new 20171006
             index = index + 1
-            feedback.setProgress(int(index * total))
 
     walls = np.copy(walls - a)  # new 20171006
     walls[(walls < walllimit)] = 0
@@ -132,11 +129,7 @@ def filter1Goodwin_as_aspect_v3(walls_for_dir, scale, a, feedback, total):
     for h in range(
         0, 180
     ):  # =0:1:180 #%increased resolution to 1 deg 20140911
-        if feedback is not None:
-            feedback.setProgress(int(h * total))
-            if feedback.isCanceled():
-                feedback.setProgressText("Calculation cancelled")
-                break
+
         filtmatrix1temp = sc.rotate(
             filtmatrix, h, order=1, reshape=False, mode="nearest"
         )  # bilinear

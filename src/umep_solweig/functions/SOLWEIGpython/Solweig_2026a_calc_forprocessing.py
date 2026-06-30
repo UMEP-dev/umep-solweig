@@ -6,14 +6,14 @@ from __future__ import absolute_import
 
 import numpy as np
 from .daylen import daylen
-from ..util.SEBESOLWEIGCommonFiles.clearnessindex_2013b import (
+from ...util.SEBESOLWEIGCommonFiles.clearnessindex_2013b import (
     clearnessindex_2013b,
 )
-from ..util.SEBESOLWEIGCommonFiles.diffusefraction import diffusefraction
-from ..util.SEBESOLWEIGCommonFiles.shadowingfunction_wallheight_13 import (
+from ...util.SEBESOLWEIGCommonFiles.diffusefraction import diffusefraction
+from ...util.SEBESOLWEIGCommonFiles.shadowingfunction_wallheight_13 import (
     shadowingfunction_wallheight_13,
 )
-from ..util.SEBESOLWEIGCommonFiles.shadowingfunction_wallheight_23 import (
+from ...util.SEBESOLWEIGCommonFiles.shadowingfunction_wallheight_23 import (
     shadowingfunction_wallheight_23,
 )
 from .gvf_2018a import gvf_2018a
@@ -22,8 +22,8 @@ from .TsWaveDelay_2015a import TsWaveDelay_2015a
 from .Kup_veg_2015a import Kup_veg_2015a
 
 from .Kside_veg_v2022a import Kside_veg_v2022a
-from ..util.SEBESOLWEIGCommonFiles.Perez_v3 import Perez_v3
-from ..util.SEBESOLWEIGCommonFiles.create_patches import create_patches
+from ...util.SEBESOLWEIGCommonFiles.Perez_v3 import Perez_v3
+from ...util.SEBESOLWEIGCommonFiles.create_patches import create_patches
 
 # Anisotropic longwave
 from .Lside_veg import Lside_veg_v2022a, Lside_veg_v2026

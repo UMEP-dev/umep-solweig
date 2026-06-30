@@ -29,6 +29,11 @@ solweig_global_comparison.png
 solweig_gpu_resource_profile.png
 
 
+# Tests
+tests/wall_height_test.tif
+tests/wall_aspect_test.tif
+
+
 # PyInstaller
 #   Usually these files are written by a python script from a template
 #   before PyInstaller builds the exe, so as to inject date/other infos into it.
