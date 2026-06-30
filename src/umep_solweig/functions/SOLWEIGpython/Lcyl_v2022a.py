@@ -29,7 +29,6 @@ def Lcyl_v2022a(
     # Stefan-Boltzmann's Constant
     SBC = 5.67051e-8
 
-
     # Degrees to radians
     deg2rad = np.pi / 180
 

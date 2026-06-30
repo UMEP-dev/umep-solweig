@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 # Try importing pynvml for NVIDIA GPU tracking
 try:
     import pynvml
+
     pynvml.nvmlInit()
     GPU_AVAILABLE = True
 except Exception:
@@ -17,7 +18,9 @@ except Exception:
 try:
     import psutil
 except ImportError:
-    print("Error: 'psutil' library is required. Install it using 'pip install psutil'")
+    print(
+        "Error: 'psutil' library is required. Install it using 'pip install psutil'"
+    )
     sys.exit(1)
 
 base = Path(__file__).resolve().parent.parent
@@ -29,17 +32,21 @@ mod_gpu = importlib.import_module("umep_solweig.solweig_run_gpu")
 mod_cpu = importlib.import_module("umep_solweig.solweig_run")
 
 # --- Solweig config file path ---
-config_path = "/home/lemap/Documents/suede/umep_process_execute/configsolweig.ini"
+config_path = (
+    "/home/lemap/Documents/suede/umep_process_execute/configsolweig.ini"
+)
 
 cpu_results = []
 gpu_results = []
 iterations = 5
+
 
 # ==========================================
 # CLASS FOR RESSOURCES MONITORING
 # ==========================================
 class ResourceMonitor(threading.Thread):
     """Fils d'exécution d'arrière-plan pour échantillonner le CPU, la RAM, le GPU et le VRAM."""
+
     def __init__(self, interval=0.1):
         super().__init__()
         self.interval = interval
@@ -57,19 +64,19 @@ class ResourceMonitor(threading.Thread):
     def run(self):
         self.start_time = time.time()
         psutil.cpu_percent(interval=None)
-        
+
         while not self._stop_event.is_set():
             self.timestamps.append(time.time() - self.start_time)
             self.cpu_samples.append(psutil.cpu_percent(interval=None))
             self.ram_samples.append(psutil.virtual_memory().percent)
-            
+
             if GPU_AVAILABLE:
                 try:
                     handle = pynvml.nvmlDeviceGetHandleByIndex(0)
                     # Metric 1 : GPU code usage metric
                     util = pynvml.nvmlDeviceGetUtilizationRates(handle)
                     self.gpu_samples.append(util.gpu)
-                    
+
                     # Metric 2 : VRAM usage
                     mem_info = pynvml.nvmlDeviceGetMemoryInfo(handle)
                     vram_percent = (mem_info.used / mem_info.total) * 100
@@ -80,11 +87,12 @@ class ResourceMonitor(threading.Thread):
             else:
                 self.gpu_samples.append(0.0)
                 self.vram_samples.append(0.0)
-                
+
             time.sleep(self.interval)
 
     def get_metrics(self):
         """Calcule le 1% low, la moyenne et le max pour chaque métrique."""
+
         def calc(samples):
             if not samples:
                 return {"1%_low": 0.0, "avg": 0.0, "max": 0.0}
@@ -93,70 +101,76 @@ class ResourceMonitor(threading.Thread):
             return {
                 "1%_low": sorted_s[low_idx],
                 "avg": sum(samples) / len(samples),
-                "max": max(samples)
+                "max": max(samples),
             }
-        
+
         return {
             "CPU": calc(self.cpu_samples),
             "RAM": calc(self.ram_samples),
             "GPU": calc(self.gpu_samples),
-            "VRAM": calc(self.vram_samples)
+            "VRAM": calc(self.vram_samples),
         }
+
 
 # ==========================================
 # FONCTION FOR THE PROGRESSION BAR
 # ==========================================
-def print_progress_bar(iteration, total, prefix='', length=30):
+def print_progress_bar(iteration, total, prefix="", length=30):
     """Affiche une barre de progression dynamique sur une seule ligne."""
     percent = (iteration / total) * 100
     filled_length = int(length * iteration // total)
-    bar = '█' * filled_length + '░' * (length - filled_length)
+    bar = "█" * filled_length + "░" * (length - filled_length)
     remaining = total - iteration
-    
-    sys.stdout.write(f'\r{prefix} |{bar}| {percent:.1f}% ({iteration}/{total}) — Il reste {remaining} run(s)')
+
+    sys.stdout.write(
+        f"\r{prefix} |{bar}| {percent:.1f}% ({iteration}/{total}) — Il reste {remaining} run(s)"
+    )
     sys.stdout.flush()
     if iteration == total:
-        sys.stdout.write('\n')
+        sys.stdout.write("\n")
+
 
 # ==========================================
 # 1. BENCHMARK
 # ==========================================
 print(f"Lancement du benchmark global ({iterations} itérations par mode)...")
 if not GPU_AVAILABLE:
-    print("[Attention] pynvml non configuré ou GPU NVIDIA introuvable. Les métriques GPU/VRAM renverront 0%.")
+    print(
+        "[Attention] pynvml non configuré ou GPU NVIDIA introuvable. Les métriques GPU/VRAM renverront 0%."
+    )
 print("-" * 60)
 
-#--- CPU Mode ---
+# --- CPU Mode ---
 monitor_cpu = ResourceMonitor(interval=0.1)
 monitor_cpu.start()
-print_progress_bar(0, iterations, prefix='Progression CPU')
-for i in range(iterations):                                         # Comment those
-    start_time = time.time()                                        # lines if you
-    mod_cpu.solweig_run(config_path, None)                          # don't want to 
-    cpu_results.append(time.time() - start_time)                    # run the 
-    print_progress_bar(i + 1, iterations, prefix='Progression CPU') # CPU mode
+print_progress_bar(0, iterations, prefix="Progression CPU")
+for i in range(iterations):  # Comment those
+    start_time = time.time()  # lines if you
+    mod_cpu.solweig_run(config_path, None)  # don't want to
+    cpu_results.append(time.time() - start_time)  # run the
+    print_progress_bar(i + 1, iterations, prefix="Progression CPU")  # CPU mode
 monitor_cpu.stop()
 monitor_cpu.join()
 cpu_metrics = monitor_cpu.get_metrics()
 print("-" * 60)
 
 cpu_metrics = {
-    "CPU": {"1%_low": 0, "avg": 0, "max": 0}, 
-    "RAM": {"1%_low": 0, "avg": 0, "max": 0}, 
+    "CPU": {"1%_low": 0, "avg": 0, "max": 0},
+    "RAM": {"1%_low": 0, "avg": 0, "max": 0},
     "GPU": {"1%_low": 0, "avg": 0, "max": 0},
-    "VRAM": {"1%_low": 0, "avg": 0, "max": 0}
+    "VRAM": {"1%_low": 0, "avg": 0, "max": 0},
 }
 
 # --- Mode GPU ---
 monitor_gpu = ResourceMonitor(interval=0.1)
 monitor_gpu.start()
 
-print_progress_bar(0, iterations, prefix='Progression GPU')
-for i in range(iterations):                                         # Comment those
-    start_time = time.time()                                        # lines if you
-    mod_gpu.solweig_run(config_path, None)                          # don't want to 
-    gpu_results.append(time.time() - start_time)                    # run the 
-    print_progress_bar(i + 1, iterations, prefix='Progression GPU') # GPU mode
+print_progress_bar(0, iterations, prefix="Progression GPU")
+for i in range(iterations):  # Comment those
+    start_time = time.time()  # lines if you
+    mod_gpu.solweig_run(config_path, None)  # don't want to
+    gpu_results.append(time.time() - start_time)  # run the
+    print_progress_bar(i + 1, iterations, prefix="Progression GPU")  # GPU mode
 
 monitor_gpu.stop()
 monitor_gpu.join()
@@ -171,26 +185,32 @@ avg_cpu_time = sum(cpu_results) / iterations if cpu_results else 0
 avg_gpu_time = sum(gpu_results) / iterations if gpu_results else 0
 speedup = avg_cpu_time / avg_gpu_time if avg_gpu_time > 0 else 0
 
-print("\n" + "="*55)
+print("\n" + "=" * 55)
 print("               RÉSULTATS GLOBAUX          ")
-print("="*55)
+print("=" * 55)
 print(f"Temps moyen CPU : {avg_cpu_time:.3f} secondes")
 print(f"Temps moyen GPU : {avg_gpu_time:.3f} secondes")
 print(f"Facteur d'accélération (Speedup) : x{speedup:.2f}")
 print("-" * 55)
 
+
 def print_hardware_table(mode_name, metrics):
     print(f" Métriques Matériel ({mode_name}) :")
-    print(f" {'Ressource':<12} | {'1% Low':<10} | {'Moyenne':<10} | {'Maximum':<10}")
+    print(
+        f" {'Ressource':<12} | {'1% Low':<10} | {'Moyenne':<10} | {'Maximum':<10}"
+    )
     print(f" {'-'*12}-+-{'-'*10}-+-{'-'*10}-+-{'-'*10}")
     for key, val in metrics.items():
-        print(f" {key:<12} | {val['1%_low']:>8.1f}% | {val['avg']:>8.1f}% | {val['max']:>8.1f}%")
+        print(
+            f" {key:<12} | {val['1%_low']:>8.1f}% | {val['avg']:>8.1f}% | {val['max']:>8.1f}%"
+        )
     print("-" * 55)
+
 
 if cpu_results:
     print_hardware_table("Mode CPU", cpu_metrics)
 print_hardware_table("Mode GPU", gpu_metrics)
-print("="*55)
+print("=" * 55)
 
 # ==========================================
 # 3. GRAPHS
@@ -198,25 +218,45 @@ print("="*55)
 
 # Graph 1 : Comparison of the global execution time
 plt.figure(figsize=(8, 5))
-modes = ['CPU (Average)', 'GPU (Average)']
+modes = ["CPU (Average)", "GPU (Average)"]
 values = [avg_cpu_time, avg_gpu_time]
-colors = ['#1f77b4', '#2ca02c']
+colors = ["#1f77b4", "#2ca02c"]
 
-bars = plt.bar(modes, values, color=colors, width=0.4, edgecolor='black', alpha=0.8)
+bars = plt.bar(
+    modes, values, color=colors, width=0.4, edgecolor="black", alpha=0.8
+)
 
 for bar in bars:
     height = bar.get_height()
-    plt.text(bar.get_x() + bar.get_width()/2., height + (max(values) * 0.02),
-             f'{height:.3f} s', ha='center', va='bottom', fontsize=10, fontweight='bold')
+    plt.text(
+        bar.get_x() + bar.get_width() / 2.0,
+        height + (max(values) * 0.02),
+        f"{height:.3f} s",
+        ha="center",
+        va="bottom",
+        fontsize=10,
+        fontweight="bold",
+    )
 
-plt.title("Comparison of the global execution time : CPU vs GPU", fontsize=12, pad=15)
+plt.title(
+    "Comparison of the global execution time : CPU vs GPU", fontsize=12, pad=15
+)
 plt.ylabel("Mean execution time (seconds)", fontsize=11)
-plt.grid(axis='y', linestyle='--', alpha=0.5)
+plt.grid(axis="y", linestyle="--", alpha=0.5)
 
 if speedup > 0:
-    plt.text(0.5, max(values) * 0.85, f"Le GPU est {speedup:.1f}x plus rapide", 
-             ha='center', va='center', fontsize=11, fontweight='bold',
-             bbox=dict(boxstyle="round,pad=0.5", fc="#fff9e6", ec="#ffa500", lw=1.5))
+    plt.text(
+        0.5,
+        max(values) * 0.85,
+        f"Le GPU est {speedup:.1f}x plus rapide",
+        ha="center",
+        va="center",
+        fontsize=11,
+        fontweight="bold",
+        bbox=dict(
+            boxstyle="round,pad=0.5", fc="#fff9e6", ec="#ffa500", lw=1.5
+        ),
+    )
 
 plt.tight_layout()
 output_chart1 = base / "solweig_global_comparison.png"
@@ -226,13 +266,42 @@ print(f"\n[Info] Graphs saved in : {output_chart1}")
 
 # Graph 2 : Usage profile of ressources in real time (GPU Mode)
 fig, axs = plt.subplots(2, 2, figsize=(12, 8), sharex=True)
-fig.suptitle(" Graph 2 : Usage profile of ressources in real time (GPU Mode)", fontsize=14, fontweight='bold', y=0.98)
+fig.suptitle(
+    " Graph 2 : Usage profile of ressources in real time (GPU Mode)",
+    fontsize=14,
+    fontweight="bold",
+    y=0.98,
+)
 
 plots_config = [
-    (axs[0, 0], monitor_gpu.timestamps, monitor_gpu.cpu_samples, "CPU usage", "#1f77b4"),
-    (axs[0, 1], monitor_gpu.timestamps, monitor_gpu.ram_samples, "RAM usage", "#ff7f0e"),
-    (axs[1, 0], monitor_gpu.timestamps, monitor_gpu.gpu_samples, "GPU Core usage", "#2ca02c"),
-    (axs[1, 1], monitor_gpu.timestamps, monitor_gpu.vram_samples, "VRAM usage", "#d62728")
+    (
+        axs[0, 0],
+        monitor_gpu.timestamps,
+        monitor_gpu.cpu_samples,
+        "CPU usage",
+        "#1f77b4",
+    ),
+    (
+        axs[0, 1],
+        monitor_gpu.timestamps,
+        monitor_gpu.ram_samples,
+        "RAM usage",
+        "#ff7f0e",
+    ),
+    (
+        axs[1, 0],
+        monitor_gpu.timestamps,
+        monitor_gpu.gpu_samples,
+        "GPU Core usage",
+        "#2ca02c",
+    ),
+    (
+        axs[1, 1],
+        monitor_gpu.timestamps,
+        monitor_gpu.vram_samples,
+        "VRAM usage",
+        "#d62728",
+    ),
 ]
 
 for ax, x, y, title, color in plots_config:
@@ -241,11 +310,17 @@ for ax, x, y, title, color in plots_config:
         ax.fill_between(x, y, color=color, alpha=0.15)
         # Average line
         avg_val = sum(y) / len(y)
-        ax.axhline(avg_val, color='black', linestyle='--', alpha=0.7, label=f"Moyenne ({avg_val:.1f}%)")
+        ax.axhline(
+            avg_val,
+            color="black",
+            linestyle="--",
+            alpha=0.7,
+            label=f"Moyenne ({avg_val:.1f}%)",
+        )
     ax.set_title(title, fontsize=11, pad=8)
     ax.set_ylabel("% Utilisé", fontsize=10)
     ax.set_ylim(-5, 105)
-    ax.grid(True, linestyle=':', alpha=0.6)
+    ax.grid(True, linestyle=":", alpha=0.6)
     ax.legend(loc="upper right", fontsize=9)
 
 

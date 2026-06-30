@@ -426,7 +426,6 @@ def svfForProcessing153(
 
                 index += 1
 
-
         svfS = svfS + 3.0459e-004
         svfW = svfW + 3.0459e-004
         # % Last azimuth is 90. Hence, manual add of last annuli for svfS and SVFW

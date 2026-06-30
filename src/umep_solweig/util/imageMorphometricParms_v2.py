@@ -76,7 +76,6 @@ def imagemorphparam_v2(dsm, dem, scale, mid, dtheta, feedback, imp_point):
     j = int(0)
     for angle in np.arange(0, 360, dtheta):
 
-
         # Rotating buildings
         # d = sc.rotate(build, angle, order=0, reshape=False, mode='nearest') #old
         a = sc.rotate(

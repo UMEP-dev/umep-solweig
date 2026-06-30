@@ -122,13 +122,21 @@ def shadowingfunction_wallheight_13(
     index = 1
 
     # main loop
-    while (amaxvalue >= dz) and (torch.abs(dx) < sizex) and (torch.abs(dy) < sizey):
+    while (
+        (amaxvalue >= dz)
+        and (torch.abs(dx) < sizex)
+        and (torch.abs(dy) < sizey)
+    ):
 
         if (pibyfour <= azimuth and azimuth < threetimespibyfour) or (
             fivetimespibyfour <= azimuth and azimuth < seventimespibyfour
         ):
             dy = signsinazimuth * index
-            dx = -1 * signcosazimuth * torch.abs(torch.round(index / tanazimuth))
+            dx = (
+                -1
+                * signcosazimuth
+                * torch.abs(torch.round(index / tanazimuth))
+            )
             ds = dssin
         else:
             dy = signsinazimuth * torch.abs(torch.round(index * tanazimuth))
@@ -157,7 +165,7 @@ def shadowingfunction_wallheight_13(
         f = torch.fmax(f, temp)  # Moving building shadow
 
         index = index + 1
-        
+
     sh, wallsh, wallsun, facesh, facesun = shade_on_walls(
         azimuth, aspect, walls, a, f
     )

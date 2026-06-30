@@ -18,7 +18,6 @@ from ...util.SEBESOLWEIGCommonFiles.clearnessindex_2013b import (
 
 from . import Solweig_2026a_calc_forprocessing as so
 
-
 # from ...functions.SOLWEIGpython import WriteMetadataSOLWEIG # Not needed anymore?
 from . import PET_calculations as p
 from . import UTCI_calculations as utci
@@ -81,7 +80,11 @@ def solweig_run(configPath, feedback):
 
     # Load DSM
     gdal_dsm = gdal.Open(configDict["filepath_dsm"])
-    dsm_wkt = re.sub(r',?AXIS\["[^"]+",(?:NORTH|SOUTH|EAST|WEST)\]', '', gdal_dsm.GetProjection())
+    dsm_wkt = re.sub(
+        r',?AXIS\["[^"]+",(?:NORTH|SOUTH|EAST|WEST)\]',
+        "",
+        gdal_dsm.GetProjection(),
+    )
     lat, lon, scale, minx, miny = xy2latlon_fromraster(dsm_wkt, gdal_dsm)
     dsm = gdal_dsm.ReadAsArray().astype(float)
     nd = gdal_dsm.GetRasterBand(1).GetNoDataValue()
@@ -107,9 +110,7 @@ def solweig_run(configPath, feedback):
     usevegdem = int(configDict["usevegdem"])
     if usevegdem == 1:
         vegdsm = (
-            gdal.Open(configDict["filepath_cdsm"])
-            .ReadAsArray()
-            .astype(float)
+            gdal.Open(configDict["filepath_cdsm"]).ReadAsArray().astype(float)
         )
 
         if configDict["filepath_tdsm"] != "":
@@ -129,9 +130,7 @@ def solweig_run(configPath, feedback):
     landcover = int(configDict["landcover"])
     if landcover == 1:
         lcgrid = (
-            gdal.Open(configDict["filepath_lc"])
-            .ReadAsArray()
-            .astype(float)
+            gdal.Open(configDict["filepath_lc"]).ReadAsArray().astype(float)
         )
 
     else:
@@ -140,9 +139,7 @@ def solweig_run(configPath, feedback):
     # DEM for buildings #TODO: fix nodata in standalone
     demforbuild = int(configDict["demforbuild"])
     if demforbuild == 1:
-        gdal_dem = gdal.Open(
-            configDict["filepath_dem"]
-        )
+        gdal_dem = gdal.Open(configDict["filepath_dem"])
         dem = gdal_dem.ReadAsArray().astype(float)
         nd = gdal_dem.GetRasterBand(1).GetNoDataValue()
 
@@ -184,7 +181,6 @@ def solweig_run(configPath, feedback):
         .ReadAsArray()
         .astype(float)
     )
-
 
     if usevegdem == 1:
         svfveg = (
@@ -263,7 +259,6 @@ def solweig_run(configPath, feedback):
         gdal.Open(configDict["filepath_wa"]).ReadAsArray().astype(float)
     )
 
-
     # Metdata
     headernum = 1
     delim = " "
@@ -305,7 +300,6 @@ def solweig_run(configPath, feedback):
         poisxy, poiname = pointOfInterest(
             configDict["poi_file"], poi_field, scale, gdal_dsm
         )
-
 
         for k in range(0, poisxy.shape[0]):
             poi_save = []  # np.zeros((1, 33))
@@ -423,7 +417,6 @@ def solweig_run(configPath, feedback):
             configDict["output_dir"] + "/buildings.tif",
             buildings,
         )
-
 
     # Import shadow matrices (Anisotropic sky)
     anisotropic_sky = int(configDict["aniso"])
@@ -605,7 +598,6 @@ def solweig_run(configPath, feedback):
             woisxy, woiname = pointOfInterest(
                 configDict["woi_file"], woi_field, scale, gdal_dsm
             )
-
 
         # Create pandas datetime object to be used when createing an xarray DataSet where wall temperatures/radiation is stored and eventually saved as a NetCDf
         if configDict["wallnetcdf"] == 1:
@@ -1118,7 +1110,6 @@ def solweig_run(configPath, feedback):
                 configDict["output_dir"] + "/Kdiff_" + time_code + ".tif",
                 dRad,
             )
-
 
         # Sky view image of patches
         if (anisotropic_sky == 1) & (i == 0) & (not poisxy is None):

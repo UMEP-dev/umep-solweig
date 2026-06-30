@@ -18,7 +18,7 @@ def CNRRabs_Total(
     lat=None,
     A=None,
     *args,
-    **kwargs
+    **kwargs,
 ):
     CNRRabs_Total.varargin
     CNRRabs_Total.nargin

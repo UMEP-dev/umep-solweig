@@ -187,7 +187,6 @@ def svf_for_voxels(
         # Loop for svf calculations of all voxel heights
         for i in loop_range:
 
-
             # Elevate ground in dsm
             temp_dsm = ((dsm + i) * ground) + (dsm * (1 - ground))
 
@@ -245,8 +244,6 @@ def svf_for_voxels(
                     int(voxelTable[temp_y, 5]), int(voxelTable[temp_y, 6])
                 ]
                 svf_height_array[temp_y] = i + svf_height  # +svf_height
-
-
 
             counter += 1
 
@@ -360,7 +357,6 @@ def svf_kmeans(
         counter = 0
 
         for i in cluster_heights:
-
 
             # Elevate ground in dsm
             temp_dsm = ((dsm + i) * ground) + (dsm * (1 - ground))
@@ -510,8 +506,6 @@ def svf_kmeans(
                     svf_height_array[temp_y] = (
                         temp_wall  # set svf_height to highest voxel for current wall
                     )
-
-
 
             counter += 1
 

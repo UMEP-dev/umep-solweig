@@ -4,6 +4,7 @@ import numpy as np
 from osgeo.gdalconst import *
 from osgeo import gdal, ogr
 
+
 def pointOfInterest(poilyr, poi_field, scale, gdal_dsm):
 
     (

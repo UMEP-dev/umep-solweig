@@ -28,7 +28,7 @@ def test_wall_height_algorithm_runs_on_dsm_file():
         use_gpu=False,
         output_height_path=str(OUTPUT_HEIGHT_PATH),
         calculate_aspect=True,
-        output_aspect_path=str(OUTPUT_ASPECT_PATH)
+        output_aspect_path=str(OUTPUT_ASPECT_PATH),
     )
 
     assert result["height"] is not None

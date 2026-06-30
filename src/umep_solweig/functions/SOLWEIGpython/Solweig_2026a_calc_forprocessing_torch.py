@@ -815,11 +815,15 @@ def Solweig_2026a_calc(
                 patch_option, device
             )
 
-            patch_emissivities = torch.zeros(skyvaultalt.shape[0], device=device)
+            patch_emissivities = torch.zeros(
+                skyvaultalt.shape[0], device=device
+            )
 
             x = torch.transpose(torch.atleast_2d(skyvaultalt), device=device)
             y = torch.transpose(torch.atleast_2d(skyvaultazi), device=device)
-            z = torch.transpose(torch.atleast_2d(patch_emissivities), device=device)
+            z = torch.transpose(
+                torch.atleast_2d(patch_emissivities), device=device
+            )
 
             L_patches = torch.append(torch.append(x, y, axis=1), z, axis=1)
             del skyvaultalt, skyvaultazi, patch_emissivities, x, y, z

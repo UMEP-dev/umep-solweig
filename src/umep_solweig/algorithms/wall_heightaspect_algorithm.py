@@ -8,17 +8,17 @@ sensible defaults so it can be used directly from a script or notebook.
 
 Methodology:
 Identifies wall pixels and their heights from a Digital Surface Model (DSM)
-using a filter as presented by Lindberg et al. (2015a). Optionally, wall aspect 
-is estimated using a specific linear filter adapted from Goodwin et al. (2009) 
-and further developed by Lindberg et al. (2015b). Wall aspect is given in degrees 
+using a filter as presented by Lindberg et al. (2015a). Optionally, wall aspect
+is estimated using a specific linear filter adapted from Goodwin et al. (2009)
+and further developed by Lindberg et al. (2015b). Wall aspect is given in degrees
 where a north-facing wall pixel has a value of zero.
 
 References:
-- Goodwin NR, Coops NC, Tooke TR, Christen A, Voogt JA (2009) Characterizing 
+- Goodwin NR, Coops NC, Tooke TR, Christen A, Voogt JA (2009) Characterizing
   urban surface cover and structure with airborne lidar technology. Can J Remote Sens 35:297–309
-- Lindberg F., Grimmond, C.S.B. and Martilli, A. (2015a) Sunlit fractions on urban 
+- Lindberg F., Grimmond, C.S.B. and Martilli, A. (2015a) Sunlit fractions on urban
   facets - Impact of spatial resolution and approach. Urban Climate.
-- Lindberg F., Jonsson, P., Honjo, T. and Wästberg, D. (2015b) Solar energy on 
+- Lindberg F., Jonsson, P., Honjo, T. and Wästberg, D. (2015b) Solar energy on
   building envelopes - 3D modelling in a 2D environment. Solar Energy 115 369–378.
 """
 
@@ -81,11 +81,14 @@ def processAlgorithm(
     """
     if dsm_input is None:
         raise ValueError("A DSM input is required")
-    
+
     # 1. Device Orchestration
     device = None
     if use_gpu and torch is not None:
-        if type(torch).__name__ == "MetaMock" or getattr(torch, "__name__", "") == "LocalMockTorch":
+        if (
+            type(torch).__name__ == "MetaMock"
+            or getattr(torch, "__name__", "") == "LocalMockTorch"
+        ):
             raise RuntimeError("PyTorch is required for GPU mode")
         if torch.cuda.is_available():
             device = torch.device("cuda")
@@ -95,7 +98,9 @@ def processAlgorithm(
             device = torch.device("cpu")
     else:
         if use_gpu:
-            _notify(feedback, "PyTorch not available. Falling back to CPU mode.")
+            _notify(
+                feedback, "PyTorch not available. Falling back to CPU mode."
+            )
         else:
             _notify(feedback, "Running CPU mode")
 
@@ -108,13 +113,15 @@ def processAlgorithm(
         if source_dataset is None:
             raise ValueError(f"Unable to open DSM raster: {dsm_input}")
         dsm_array = source_dataset.ReadAsArray().astype(float)
-        
+
         # Dynamic Resolution Extraction: pixel width is index 1 of GeoTransform
         transform = source_dataset.GetGeoTransform()
         if transform and transform[1] > 0:
             dsm_scale = 1.0 / transform[1]
 
-    elif hasattr(dsm_input, "ReadAsArray") and hasattr(dsm_input, "GetGeoTransform"):
+    elif hasattr(dsm_input, "ReadAsArray") and hasattr(
+        dsm_input, "GetGeoTransform"
+    ):
         source_dataset = dsm_input
         dsm_array = dsm_input.ReadAsArray().astype(float)
         transform = dsm_input.GetGeoTransform()
@@ -127,7 +134,7 @@ def processAlgorithm(
             warnings.warn(
                 "A raw NumPy array was provided. Output paths will be ignored "
                 "because geospatial metadata (source_dataset) is unavailable for saving.",
-                UserWarning
+                UserWarning,
             )
 
     # 3. Calculate Wall Height
@@ -169,7 +176,11 @@ def processAlgorithm(
     if output_height_path is not None and source_dataset is not None:
         saverasternd(source_dataset, str(output_height_path), wall_output)
 
-    if output_aspect_path is not None and aspect_output is not None and source_dataset is not None:
+    if (
+        output_aspect_path is not None
+        and aspect_output is not None
+        and source_dataset is not None
+    ):
         saverasternd(source_dataset, str(output_aspect_path), aspect_output)
 
     # 6. Memory Cleanup
@@ -186,8 +197,16 @@ def processAlgorithm(
     return {
         "height": wall_output,
         "aspect": aspect_output,
-        "height_path": str(output_height_path) if (output_height_path and source_dataset) else None,
-        "aspect_path": str(output_aspect_path) if (output_aspect_path and source_dataset) else None,
+        "height_path": (
+            str(output_height_path)
+            if (output_height_path and source_dataset)
+            else None
+        ),
+        "aspect_path": (
+            str(output_aspect_path)
+            if (output_aspect_path and source_dataset)
+            else None
+        ),
     }
 
 

@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def patch_steradians(L_patches):
     """'This function calculates the steradians of the patches"""
 

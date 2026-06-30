@@ -1,7 +1,6 @@
 import numpy as np
 from . import sunlit_shaded_patches
 
-
 """ This function creates a hemispheric image based on patch characteristics """
 
 

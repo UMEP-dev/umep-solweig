@@ -1,6 +1,7 @@
 from __future__ import division
 import numpy as np
 
+
 def shade_on_walls(azimuth, aspect, walls, dsm, f, shvoveg):
     # wall shadows wall parameterization
     wallbol = (walls > 0).astype(float)

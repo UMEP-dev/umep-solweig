@@ -7,7 +7,6 @@ from libsmop import *
 @function
 def solar_ET(d=None, *args, **kwargs):
 
-
     # used to calculate the equation of time for use in calcuating the zenith
     # angle of the sun.
 

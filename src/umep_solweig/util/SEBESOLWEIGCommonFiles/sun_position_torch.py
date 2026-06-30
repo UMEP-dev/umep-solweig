@@ -210,7 +210,9 @@ def julian_calculation(t_input):
 
     if time["month"] == 1 or time["month"] == 2:
         Y = torch.tensor(time["year"] - 1, device=device, dtype=torch.float64)
-        M = torch.tensor(time["month"] + 12, device=device, dtype=torch.float64)
+        M = torch.tensor(
+            time["month"] + 12, device=device, dtype=torch.float64
+        )
     else:
         Y = torch.tensor(time["year"], device=device, dtype=torch.float64)
         M = torch.tensor(time["month"], device=device, dtype=torch.float64)
@@ -352,7 +354,7 @@ def earth_heliocentric_position_calculation(julian):
             [25, 3.16, 4690.48],
         ],
         device=device,
-        dtype=torch.float64
+        dtype=torch.float64,
     )
 
     L1_terms = torch.tensor(
@@ -393,7 +395,7 @@ def earth_heliocentric_position_calculation(julian):
             [6, 4.67, 4690.48],
         ],
         device=device,
-        dtype=torch.float64
+        dtype=torch.float64,
     )
 
     L2_terms = torch.tensor(
@@ -420,7 +422,7 @@ def earth_heliocentric_position_calculation(julian):
             [2, 3.75, 0.98],
         ],
         device=device,
-        dtype=torch.float64
+        dtype=torch.float64,
     )
 
     L3_terms = torch.tensor(
@@ -434,12 +436,12 @@ def earth_heliocentric_position_calculation(julian):
             [1, 5.97, 242.73],
         ],
         device=device,
-        dtype=torch.float64
+        dtype=torch.float64,
     )
     L4_terms = torch.tensor(
         [[114.0, 3.142, 0], [8, 4.13, 6283.08], [1, 3.84, 12566.15]],
         device=device,
-        dtype=torch.float64
+        dtype=torch.float64,
     )
 
     L5_terms = torch.tensor([1, 3.14, 0], device=device, dtype=torch.float64)
@@ -511,11 +513,13 @@ def earth_heliocentric_position_calculation(julian):
             [32, 4, 1577.34],
         ],
         device=device,
-        dtype=torch.float64
+        dtype=torch.float64,
     )
 
     B1_terms = torch.tensor(
-        [[9, 3.9, 5507.55], [6, 1.73, 5223.69]], device=device, dtype=torch.float64
+        [[9, 3.9, 5507.55], [6, 1.73, 5223.69]],
+        device=device,
+        dtype=torch.float64,
     )
 
     A0 = B0_terms[:, 0]
@@ -587,7 +591,7 @@ def earth_heliocentric_position_calculation(julian):
             [26, 4.59, 10447.39],
         ],
         device=device,
-        dtype=torch.float64
+        dtype=torch.float64,
     )
 
     R1_terms = torch.tensor(
@@ -604,7 +608,7 @@ def earth_heliocentric_position_calculation(julian):
             [9, 0.27, 5486.78],
         ],
         device=device,
-        dtype=torch.float64
+        dtype=torch.float64,
     )
 
     R2_terms = torch.tensor(
@@ -617,11 +621,13 @@ def earth_heliocentric_position_calculation(julian):
             [3, 5.47, 18849],
         ],
         device=device,
-        dtype=torch.float64
+        dtype=torch.float64,
     )
 
     R3_terms = torch.tensor(
-        [[145.0, 4.273, 6283.076], [7, 3.92, 12566.15]], device=device, dtype=torch.float64
+        [[145.0, 4.273, 6283.076], [7, 3.92, 12566.15]],
+        device=device,
+        dtype=torch.float64,
     )
 
     R4_terms = [4, 2.56, 6283.08]
@@ -707,7 +713,9 @@ def nutation_calculation(julian):
     # 1. Mean elongation of the moon from the sun
     p = torch.atleast_2d(
         torch.tensor(
-            [(1 / 189474), -0.0019142, 445267.11148, 297.85036], device=device, dtype=torch.float64
+            [(1 / 189474), -0.0019142, 445267.11148, 297.85036],
+            device=device,
+            dtype=torch.float64,
         )
     )
 
@@ -722,7 +730,9 @@ def nutation_calculation(julian):
     # 2. Mean anomaly of the sun (earth)
     p = torch.atleast_2d(
         torch.tensor(
-            [-(1 / 300000), -0.0001603, 35999.05034, 357.52772], device=device, dtype=torch.float64
+            [-(1 / 300000), -0.0001603, 35999.05034, 357.52772],
+            device=device,
+            dtype=torch.float64,
         )
     )
 
@@ -737,7 +747,9 @@ def nutation_calculation(julian):
     # 3. Mean anomaly of the moon
     p = torch.atleast_2d(
         torch.tensor(
-            [(1 / 56250), 0.0086972, 477198.867398, 134.96298], device=device,dtype=torch.float64
+            [(1 / 56250), 0.0086972, 477198.867398, 134.96298],
+            device=device,
+            dtype=torch.float64,
         )
     )
 
@@ -752,7 +764,9 @@ def nutation_calculation(julian):
     # 4. Moon argument of latitude
     p = torch.atleast_2d(
         torch.tensor(
-            [(1 / 327270), -0.0036825, 483202.017538, 93.27191], device=device, dtype=torch.float64
+            [(1 / 327270), -0.0036825, 483202.017538, 93.27191],
+            device=device,
+            dtype=torch.float64,
         )
     )
 
@@ -768,7 +782,9 @@ def nutation_calculation(julian):
     # ecliptic, measured from the mean equinox of the date
     p = torch.atleast_2d(
         torch.tensor(
-            [(1 / 450000), 0.0020708, -1934.136261, 125.04452], device=device, dtype=torch.float64
+            [(1 / 450000), 0.0020708, -1934.136261, 125.04452],
+            device=device,
+            dtype=torch.float64,
         )
     )
 
@@ -848,7 +864,7 @@ def nutation_calculation(julian):
             [2, -1, 0, 2, 2],
         ],
         device=device,
-        dtype=torch.float64
+        dtype=torch.float64,
     )
 
     nutation_terms = torch.tensor(
@@ -918,7 +934,7 @@ def nutation_calculation(julian):
             [-3, 0, 0, 0],
         ],
         device=device,
-        dtype=torch.float64
+        dtype=torch.float64,
     )
 
     # Using the tabulated values, compute the delta_longitude and
@@ -927,7 +943,9 @@ def nutation_calculation(julian):
         [X0, X1, X2, X3, X4], device=device, dtype=torch.float64
     )  # a col mat in octave
 
-    tabulated_argument = torch.matmul(Y_terms.float(), Xi.float()) * (torch.pi / 180)
+    tabulated_argument = torch.matmul(Y_terms.float(), Xi.float()) * (
+        torch.pi / 180
+    )
 
     delta_longitude = (
         nutation_terms[:, 0] + (nutation_terms[:, 1] * JCE)
@@ -972,7 +990,7 @@ def true_obliquity_calculation(julian, nutation):
                 84381.448,
             ],
             device=device,
-            dtype=torch.float64
+            dtype=torch.float64,
         )
     )
 

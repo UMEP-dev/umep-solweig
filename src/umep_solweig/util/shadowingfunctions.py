@@ -45,7 +45,6 @@ def shadowingfunctionglobalradiation(
     # % main loop
     while amaxvalue >= dz and np.abs(dx) < sizex and np.abs(dy) < sizey:
 
-
         if (
             pibyfour <= azimuth
             and azimuth < threetimespibyfour

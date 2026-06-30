@@ -16,7 +16,7 @@ def CNR_Kinabs_meas(
     t=None,
     Atr=None,
     *args,
-    **kwargs
+    **kwargs,
 ):
     CNR_Kinabs_meas.varargin
     CNR_Kinabs_meas.nargin

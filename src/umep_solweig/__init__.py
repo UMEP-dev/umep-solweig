@@ -27,18 +27,22 @@ except ImportError:
     pass
 
 
-
 # Optional GPU/torch imports
 try:
     from .functions.SOLWEIGpython import (
         Solweig_2026a_calc_forprocessing_torch,
     )
+
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
 
 # Package-level convenient submodules
-from .functions.SOLWEIGpython import PET_calculations, Solweig_2026a_calc_forprocessing, Solweig_run
+from .functions.SOLWEIGpython import (
+    PET_calculations,
+    Solweig_2026a_calc_forprocessing,
+    Solweig_run,
+)
 
 from .functions.SOLWEIGpython import Solweig_run_torch
 
@@ -64,7 +68,9 @@ __all__ = [
 
 # Add torch variants if available
 if HAS_TORCH:
-    __all__.extend([
-        "Solweig_run_torch",
-        "Solweig_2026a_calc_forprocessing_torch",
-    ])
+    __all__.extend(
+        [
+            "Solweig_run_torch",
+            "Solweig_2026a_calc_forprocessing_torch",
+        ]
+    )

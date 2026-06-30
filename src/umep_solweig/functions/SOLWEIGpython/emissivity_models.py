@@ -5,8 +5,6 @@ import numpy as np
 
 def model1(sky_patches, esky, Ta):
 
-
-
     # Degrees to radians
     deg2rad = np.pi / 180
 

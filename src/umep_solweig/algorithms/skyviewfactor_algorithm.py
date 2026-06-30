@@ -288,7 +288,6 @@ class ProcessingSkyViewFactorAlgorithm(QgsProcessingAlgorithm):
             parameters, self.WALL_SCHEME, context
         )
 
-
         if parameters["OUTPUT_DIR"] == "TEMPORARY_OUTPUT":
             if not (os.path.isdir(outputDir)):
                 os.mkdir(outputDir)
@@ -311,15 +310,11 @@ class ProcessingSkyViewFactorAlgorithm(QgsProcessingAlgorithm):
             if torch.cuda.is_available():
                 device = torch.device("cuda")
                 if feedback is not None:
-                    print(
-                        "PyTorch and GPU found. Initiating GPU mode..."
-                    )
+                    print("PyTorch and GPU found. Initiating GPU mode...")
             elif hasattr(torch, "xpu") and torch.xpu.is_available():
                 device = torch.device("xpu")
                 if feedback is not None:
-                    print(
-                        "PyTorch and GPU found. Initiating GPU mode..."
-                    )
+                    print("PyTorch and GPU found. Initiating GPU mode...")
             else:
                 device = torch.device("cpu")
                 if feedback is not None:
@@ -628,7 +623,6 @@ class ProcessingSkyViewFactorAlgorithm(QgsProcessingAlgorithm):
             # Loop for exact SVF at heights (increase DEM)
             # if demlayer:
             else:
-
 
                 if use_gpu:
                     print("gpu version")
@@ -1039,9 +1033,7 @@ class ProcessingSkyViewFactorAlgorithm(QgsProcessingAlgorithm):
             torch.xpu.empty_cache()  # Clear again to be sure
             gc.collect()  # Force Python garbage collection
 
-        print(
-            "Sky View Factor: SVF grid(s) successfully generated"
-        )
+        print("Sky View Factor: SVF grid(s) successfully generated")
 
         return {self.OUTPUT_DIR: outputDir, self.OUTPUT_FILE: outputFile}
 
