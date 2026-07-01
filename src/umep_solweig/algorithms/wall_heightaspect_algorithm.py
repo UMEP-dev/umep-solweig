@@ -58,7 +58,7 @@ def processAlgorithm(
     output_height_path: Optional[Union[str, os.PathLike]] = None,
     calculate_aspect: bool = True,
     output_aspect_path: Optional[Union[str, os.PathLike]] = None,
-    feedback = None,
+    feedback=None,
 ) -> dict[str, Any]:
     """Run wall height and optional wall aspect extraction.
 

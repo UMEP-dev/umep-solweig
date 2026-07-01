@@ -193,16 +193,16 @@ def svf_for_voxels(
         voxel_y = np.where(voxelTable[:, 1] == i + svf_height)  # +svf_height)
         for temp_y in voxel_y[0]:
             svf_array[temp_y] = svftotal[
-                int(voxelTable[temp_y, 5][0]), int(voxelTable[temp_y, 6][0])
+                int(voxelTable[temp_y, 5]), int(voxelTable[temp_y, 6])
             ]
             svfbu_array[temp_y] = svfbu[
-                int(voxelTable[temp_y, 5][0]), int(voxelTable[temp_y, 6][0])
+                int(voxelTable[temp_y, 5]), int(voxelTable[temp_y, 6])
             ]
             svfveg_array[temp_y] = svfveg[
-                int(voxelTable[temp_y, 5][0]), int(voxelTable[temp_y, 6][0])
+                int(voxelTable[temp_y, 5]), int(voxelTable[temp_y, 6])
             ]
             svfaveg_array[temp_y] = svfaveg[
-                int(voxelTable[temp_y, 5][0]), int(voxelTable[temp_y, 6][0])
+                int(voxelTable[temp_y, 5]), int(voxelTable[temp_y, 6])
             ]
             svf_height_array[temp_y] = i + svf_height  # +svf_height
 

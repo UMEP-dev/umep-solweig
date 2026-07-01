@@ -73,25 +73,17 @@ def solweig_run(configPath, feedback):
     # Load parameters settings for SOLWEIG
     with open(configDict["para_json_path"], "r") as jsn:
         param = json.load(jsn)
-        
-    
-    
 
     # --- Load on CPU or GPU config
     device = torch.device("cpu")
-    if (
-        configDict["calculation_mode"] == "gpu"
-        and torch.cuda.is_available()
-    ):
+    if configDict["calculation_mode"] == "gpu" and torch.cuda.is_available():
         device = torch.device("cuda")
         if feedback is not None:
             feedback.setProgressText(
                 "PyTorch and NVIDIA/AMD GPU found. Initiating CUDA mode..."
             )
         else:
-            print(
-                "PyTorch and NVIDIA/AMD GPU found. Initiating CUDA mode..."
-            )
+            print("PyTorch and NVIDIA/AMD GPU found. Initiating CUDA mode...")
 
     elif (
         configDict["calculation_mode"] == "gpu"
@@ -159,7 +151,9 @@ def solweig_run(configPath, feedback):
         usevegdem = int(configDict["usevegdem"])
         if usevegdem == 1:
             vegdsm = torch.from_numpy(
-                gdal.Open(configDict["filepath_cdsm"]).ReadAsArray().astype(float)
+                gdal.Open(configDict["filepath_cdsm"])
+                .ReadAsArray()
+                .astype(float)
             ).to(device)
 
             if configDict["filepath_tdsm"] != "":
@@ -185,7 +179,9 @@ def solweig_run(configPath, feedback):
         landcover = int(configDict["landcover"])
         if landcover == 1:
             lcgrid = torch.from_numpy(
-                gdal.Open(configDict["filepath_lc"]).ReadAsArray().astype(float)
+                gdal.Open(configDict["filepath_lc"])
+                .ReadAsArray()
+                .astype(float)
             ).to(device)
 
         else:
@@ -339,7 +335,9 @@ def solweig_run(configPath, feedback):
 
         location = {"longitude": lon, "latitude": lat, "altitude": alt}
         YYYY, altitude, azimuth, zen, jday, leafon, dectime, altmax = (
-            Solweig_2015a_metdata_noload(metdata, location, int(configDict["utc"]))
+            Solweig_2015a_metdata_noload(
+                metdata, location, int(configDict["utc"])
+            )
         )
 
         DOY = metdata[:, 1]
@@ -373,7 +371,10 @@ def solweig_run(configPath, feedback):
             for k in range(0, poisxy.shape[0]):
                 poi_save = []  # torch.zeros((1, 33))
                 data_out = (
-                    configDict["output_dir"] + "/POI_" + str(poiname[k]) + ".txt"
+                    configDict["output_dir"]
+                    + "/POI_"
+                    + str(poiname[k])
+                    + ".txt"
                 )
                 np.savetxt(
                     data_out,
@@ -437,11 +438,15 @@ def solweig_run(configPath, feedback):
                 ):
                     leaf_bool = (
                         DOY > param["Tree_settings"]["Value"]["First_day_leaf"]
-                    ) | (DOY < param["Tree_settings"]["Value"]["Last_day_leaf"])
+                    ) | (
+                        DOY < param["Tree_settings"]["Value"]["Last_day_leaf"]
+                    )
                 else:
                     leaf_bool = (
                         DOY > param["Tree_settings"]["Value"]["First_day_leaf"]
-                    ) & (DOY < param["Tree_settings"]["Value"]["Last_day_leaf"])
+                    ) & (
+                        DOY < param["Tree_settings"]["Value"]["Last_day_leaf"]
+                    )
                 leafon[0, leaf_bool] = 1
 
             # % Vegetation transmittivity of shortwave radiation
@@ -508,14 +513,22 @@ def solweig_run(configPath, feedback):
         # Import shadow matrices (Anisotropic sky)
         anisotropic_sky = int(configDict["aniso"])
         if anisotropic_sky == 1:  # UseAniso
-            data = torch.load(configDict["input_aniso"], map_location=device, weights_only=True)
+            data = torch.load(
+                configDict["input_aniso"],
+                map_location=device,
+                weights_only=True,
+            )
             shmat = data["shadowmat"]
             vegshmat = data["vegshadowmat"]
             vbshvegshmat = data["vbshmat"]
             if usevegdem == 1:
-                diffsh = torch.zeros((rows, cols, shmat.shape[2]), device=device)
+                diffsh = torch.zeros(
+                    (rows, cols, shmat.shape[2]), device=device
+                )
                 for i in range(0, shmat.shape[2]):
-                    diffsh[:, :, i] = shmat[:, :, i] - (1 - vegshmat[:, :, i]) * (
+                    diffsh[:, :, i] = shmat[:, :, i] - (
+                        1 - vegshmat[:, :, i]
+                    ) * (
                         1 - transVeg
                     )  # changes in psi not implemented yet
             else:
@@ -568,7 +581,9 @@ def solweig_run(configPath, feedback):
                 Knight
                 + param["Albedo"]["Effective"]["Value"]["Cobble_stone_2014a"]
             )
-            emis_grid = Knight + param["Emissivity"]["Value"]["Cobble_stone_2014a"]
+            emis_grid = (
+                Knight + param["Emissivity"]["Value"]["Cobble_stone_2014a"]
+            )
             TgK_wall = param["Ts_deg"]["Value"]["Walls"]
             Tstart_wall = param["Tstart"]["Value"]["Walls"]
             TmaxLST_wall = param["TmaxLST"]["Value"]["Walls"]
@@ -642,7 +657,12 @@ def solweig_run(configPath, feedback):
             )
             # Calculate wall aspect for wall scheme, i.e. include corners (thicker walls)
             dirwalls_scheme = wa.filter1Goodwin_as_aspect_v3(
-                walls_scheme.clone(), scale, dsm, feedback, 100.0 / 180.0, device
+                walls_scheme.clone(),
+                scale,
+                dsm,
+                feedback,
+                100.0 / 180.0,
+                device,
             )
 
             # Used in wall temperature parameterization scheme
@@ -722,7 +742,12 @@ def solweig_run(configPath, feedback):
         if anisotropic_sky == 1:
             if not poisxy is None:
                 patch_characteristics = hemispheric_image(
-                    poisxy, shmat, vegshmat, vbshvegshmat, voxelMaps, wallScheme
+                    poisxy,
+                    shmat,
+                    vegshmat,
+                    vbshvegshmat,
+                    voxelMaps,
+                    wallScheme,
                 )
 
         # If metfile starts at night
@@ -748,7 +773,7 @@ def solweig_run(configPath, feedback):
                 if feedback.isCanceled():
                     feedback.setProgressText("Calculation cancelled")
                     break
-                    
+
             # Daily water body temperature
             if landcover == 1:
                 if ((dectime[i] - torch.floor(dectime[i]))) == 0 or (i == 0):
@@ -954,7 +979,9 @@ def solweig_run(configPath, feedback):
                 ax.set_xlabel("Decimal time")
                 ax.set_title("UTC" + str(configDict["utc"]))
                 ax.legend()
-                fig.savefig(configDict["output_dir"] + "/metCheck.png", dpi=150)
+                fig.savefig(
+                    configDict["output_dir"] + "/metCheck.png", dpi=150
+                )
 
             tmrtplot = tmrtplot + Tmrt
 
@@ -977,31 +1004,57 @@ def solweig_run(configPath, feedback):
                     poi_save[0, 7] = radIout
                     poi_save[0, 8] = radDout
                     poi_save[0, 9] = radG[i]
-                    poi_save[0, 10] = Kdown[int(poisxy[k, 2]), int(poisxy[k, 1])]
+                    poi_save[0, 10] = Kdown[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
                     poi_save[0, 11] = Kup[int(poisxy[k, 2]), int(poisxy[k, 1])]
-                    poi_save[0, 12] = Keast[int(poisxy[k, 2]), int(poisxy[k, 1])]
-                    poi_save[0, 13] = Ksouth[int(poisxy[k, 2]), int(poisxy[k, 1])]
-                    poi_save[0, 14] = Kwest[int(poisxy[k, 2]), int(poisxy[k, 1])]
-                    poi_save[0, 15] = Knorth[int(poisxy[k, 2]), int(poisxy[k, 1])]
-                    poi_save[0, 16] = Ldown[int(poisxy[k, 2]), int(poisxy[k, 1])]
+                    poi_save[0, 12] = Keast[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
+                    poi_save[0, 13] = Ksouth[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
+                    poi_save[0, 14] = Kwest[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
+                    poi_save[0, 15] = Knorth[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
+                    poi_save[0, 16] = Ldown[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
                     poi_save[0, 17] = Lup[int(poisxy[k, 2]), int(poisxy[k, 1])]
-                    poi_save[0, 18] = Least[int(poisxy[k, 2]), int(poisxy[k, 1])]
-                    poi_save[0, 19] = Lsouth[int(poisxy[k, 2]), int(poisxy[k, 1])]
-                    poi_save[0, 20] = Lwest[int(poisxy[k, 2]), int(poisxy[k, 1])]
-                    poi_save[0, 21] = Lnorth[int(poisxy[k, 2]), int(poisxy[k, 1])]
+                    poi_save[0, 18] = Least[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
+                    poi_save[0, 19] = Lsouth[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
+                    poi_save[0, 20] = Lwest[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
+                    poi_save[0, 21] = Lnorth[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
                     poi_save[0, 22] = Ta[i]
                     poi_save[0, 23] = Tg[int(poisxy[k, 2]), int(poisxy[k, 1])]
                     poi_save[0, 24] = RH[i]
                     poi_save[0, 25] = esky
-                    poi_save[0, 26] = Tmrt[int(poisxy[k, 2]), int(poisxy[k, 1])]
+                    poi_save[0, 26] = Tmrt[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
                     poi_save[0, 27] = I0
                     poi_save[0, 28] = CI
-                    poi_save[0, 29] = shadow[int(poisxy[k, 2]), int(poisxy[k, 1])]
+                    poi_save[0, 29] = shadow[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
                     poi_save[0, 30] = svf[int(poisxy[k, 2]), int(poisxy[k, 1])]
                     poi_save[0, 31] = svfbuveg[
                         int(poisxy[k, 2]), int(poisxy[k, 1])
                     ]
-                    poi_save[0, 32] = KsideI[int(poisxy[k, 2]), int(poisxy[k, 1])]
+                    poi_save[0, 32] = KsideI[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
                     # Recalculating wind speed based on powerlaw
                     WsPET = (1.1 / sensorheight) ** 0.2 * Ws[i]
                     WsUTCI = (10.0 / sensorheight) ** 0.2 * Ws[i]
@@ -1026,10 +1079,18 @@ def solweig_run(configPath, feedback):
                     )
                     poi_save[0, 34] = resultUTCI
                     poi_save[0, 35] = CI_TgG
-                    poi_save[0, 36] = KsideD[int(poisxy[k, 2]), int(poisxy[k, 1])]
-                    poi_save[0, 37] = Lside[int(poisxy[k, 2]), int(poisxy[k, 1])]
-                    poi_save[0, 38] = dRad[int(poisxy[k, 2]), int(poisxy[k, 1])]
-                    poi_save[0, 39] = Kside[int(poisxy[k, 2]), int(poisxy[k, 1])]
+                    poi_save[0, 36] = KsideD[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
+                    poi_save[0, 37] = Lside[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
+                    poi_save[0, 38] = dRad[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
+                    poi_save[0, 39] = Kside[
+                        int(poisxy[k, 2]), int(poisxy[k, 1])
+                    ]
                     data_out = (
                         configDict["output_dir"]
                         + "/POI_"
@@ -1131,7 +1192,9 @@ def solweig_run(configPath, feedback):
                         wall_data[0, 3] = minu[i]
                         wall_data[0, 4] = dectime[i]
                         wall_data[0, 5] = Ta[i]
-                        wall_data[0, 6] = svf[int(woisxy[k, 2]), int(woisxy[k, 1])]
+                        wall_data[0, 6] = svf[
+                            int(woisxy[k, 2]), int(woisxy[k, 1])
+                        ]
                         wall_data[0, 7:] = temp_all
 
                         # Num format for output file data
@@ -1274,7 +1337,9 @@ def solweig_run(configPath, feedback):
             # Sky view image of patches
             if (anisotropic_sky == 1) & (i == 0) & (not poisxy is None):
                 for k in range(poisxy.shape[0]):
-                    Lsky_patch_characteristics[:, 2] = patch_characteristics[:, k]
+                    Lsky_patch_characteristics[:, 2] = patch_characteristics[
+                        :, k
+                    ]
                     skyviewimage_out = (
                         configDict["output_dir"]
                         + "/POI_"
@@ -1298,7 +1363,8 @@ def solweig_run(configPath, feedback):
                 feedback.setProgressText("Saving files for Tree Planter tool")
             # Save DSM
             copyfile(
-                configDict["filepath_dsm"], configDict["output_dir"] + "/DSM.tif"
+                configDict["filepath_dsm"],
+                configDict["output_dir"] + "/DSM.tif",
             )
 
             # Save CDSM
@@ -1308,7 +1374,9 @@ def solweig_run(configPath, feedback):
                     configDict["output_dir"] + "/CDSM.tif",
                 )
 
-            albedo_g = param["Albedo"]["Effective"]["Value"]["Cobble_stone_2014a"]
+            albedo_g = param["Albedo"]["Effective"]["Value"][
+                "Cobble_stone_2014a"
+            ]
             eground = param["Emissivity"]["Value"]["Cobble_stone_2014a"]
 
             # Saving settings from SOLWEIG for SOLWEIG1D in TreePlanter
@@ -1365,7 +1433,8 @@ def solweig_run(configPath, feedback):
 
         # Copying met file for SpatialTC
         copyfile(
-            configDict["input_met"], configDict["output_dir"] + "/metforcing.txt"
+            configDict["input_met"],
+            configDict["output_dir"] + "/metforcing.txt",
         )
 
         tmrtplot = (

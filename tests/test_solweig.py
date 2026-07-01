@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 # Try importing tracking libraries
 try:
     import pynvml
+
     pynvml.nvmlInit()
     GPU_AVAILABLE = True
 except Exception:
@@ -40,6 +41,7 @@ OUTPUT_CHART_PROFILE = TEST_DIR / "tests_out/solweig_gpu_resource_profile.png"
 # ==========================================
 class ResourceMonitor(threading.Thread):
     """Background thread to sample CPU, RAM, GPU, and VRAM."""
+
     def __init__(self, interval=0.1):
         super().__init__()
         self.interval = interval
@@ -121,31 +123,31 @@ def test_solweig_src_files_benchmark():
     # 1. --- CPU Mode Run ---
     monitor_cpu = ResourceMonitor(interval=0.1)
     monitor_cpu.start()
-    
+
     for _ in range(iterations):
         start_time = time.time()
         mod_cpu.solweig_run(str(CONFIG_PATH), None)
         cpu_results.append(time.time() - start_time)
-        
+
     monitor_cpu.stop()
     monitor_cpu.join()
 
     # 2. --- GPU Mode Run ---
     monitor_gpu = ResourceMonitor(interval=0.1)
     monitor_gpu.start()
-    
+
     for _ in range(iterations):
         start_time = time.time()
         mod_gpu.solweig_run(str(CONFIG_PATH), None)
         gpu_results.append(time.time() - start_time)
-        
+
     monitor_gpu.stop()
     monitor_gpu.join()
 
     # 3. --- Calculations & Basic Verification Asserts ---
     assert len(cpu_results) == iterations
     assert len(gpu_results) == iterations
-    
+
     avg_cpu_time = sum(cpu_results) / iterations
     avg_gpu_time = sum(gpu_results) / iterations
     speedup = avg_cpu_time / avg_gpu_time if avg_gpu_time > 0 else 0
@@ -156,25 +158,41 @@ def test_solweig_src_files_benchmark():
     values = [avg_cpu_time, avg_gpu_time]
     colors = ["#1f77b4", "#2ca02c"]
 
-    bars = plt.bar(modes, values, color=colors, width=0.4, edgecolor="black", alpha=0.8)
+    bars = plt.bar(
+        modes, values, color=colors, width=0.4, edgecolor="black", alpha=0.8
+    )
     for bar in bars:
         height = bar.get_height()
         plt.text(
             bar.get_x() + bar.get_width() / 2.0,
             height + (max(values) * 0.02),
             f"{height:.3f} s",
-            ha="center", va="bottom", fontsize=10, fontweight="bold"
+            ha="center",
+            va="bottom",
+            fontsize=10,
+            fontweight="bold",
         )
 
-    plt.title("Comparison of the global execution time : CPU vs GPU", fontsize=12, pad=15)
+    plt.title(
+        "Comparison of the global execution time : CPU vs GPU",
+        fontsize=12,
+        pad=15,
+    )
     plt.ylabel("Mean execution time (seconds)", fontsize=11)
     plt.grid(axis="y", linestyle="--", alpha=0.5)
 
     if speedup > 0:
         plt.text(
-            0.5, max(values) * 0.85, f"Le GPU est {speedup:.1f}x plus rapide",
-            ha="center", va="center", fontsize=11, fontweight="bold",
-            bbox=dict(boxstyle="round,pad=0.5", fc="#fff9e6", ec="#ffa500", lw=1.5)
+            0.5,
+            max(values) * 0.85,
+            f"Le GPU est {speedup:.1f}x plus rapide",
+            ha="center",
+            va="center",
+            fontsize=11,
+            fontweight="bold",
+            bbox=dict(
+                boxstyle="round,pad=0.5", fc="#fff9e6", ec="#ffa500", lw=1.5
+            ),
         )
 
     plt.tight_layout()
@@ -183,13 +201,42 @@ def test_solweig_src_files_benchmark():
 
     # 5. --- Generate Graph 2: Resource Profiles ---
     fig, axs = plt.subplots(2, 2, figsize=(12, 8), sharex=True)
-    fig.suptitle("Graph 2 : Usage profile of resources in real time (GPU Mode)", fontsize=14, fontweight="bold", y=0.98)
+    fig.suptitle(
+        "Graph 2 : Usage profile of resources in real time (GPU Mode)",
+        fontsize=14,
+        fontweight="bold",
+        y=0.98,
+    )
 
     plots_config = [
-        (axs[0, 0], monitor_gpu.timestamps, monitor_gpu.cpu_samples, "CPU usage", "#1f77b4"),
-        (axs[0, 1], monitor_gpu.timestamps, monitor_gpu.ram_samples, "RAM usage", "#ff7f0e"),
-        (axs[1, 0], monitor_gpu.timestamps, monitor_gpu.gpu_samples, "GPU Core usage", "#2ca02c"),
-        (axs[1, 1], monitor_gpu.timestamps, monitor_gpu.vram_samples, "VRAM usage", "#d62728"),
+        (
+            axs[0, 0],
+            monitor_gpu.timestamps,
+            monitor_gpu.cpu_samples,
+            "CPU usage",
+            "#1f77b4",
+        ),
+        (
+            axs[0, 1],
+            monitor_gpu.timestamps,
+            monitor_gpu.ram_samples,
+            "RAM usage",
+            "#ff7f0e",
+        ),
+        (
+            axs[1, 0],
+            monitor_gpu.timestamps,
+            monitor_gpu.gpu_samples,
+            "GPU Core usage",
+            "#2ca02c",
+        ),
+        (
+            axs[1, 1],
+            monitor_gpu.timestamps,
+            monitor_gpu.vram_samples,
+            "VRAM usage",
+            "#d62728",
+        ),
     ]
 
     for ax, x, y, title, color in plots_config:
@@ -197,7 +244,13 @@ def test_solweig_src_files_benchmark():
             ax.plot(x, y, color=color, linewidth=1.5, label=title)
             ax.fill_between(x, y, color=color, alpha=0.15)
             avg_val = sum(y) / len(y)
-            ax.axhline(avg_val, color="black", linestyle="--", alpha=0.7, label=f"Moyenne ({avg_val:.1f}%)")
+            ax.axhline(
+                avg_val,
+                color="black",
+                linestyle="--",
+                alpha=0.7,
+                label=f"Moyenne ({avg_val:.1f}%)",
+            )
         ax.set_title(title, fontsize=11, pad=8)
         ax.set_ylabel("% Utilisé", fontsize=10)
         ax.set_ylim(-5, 105)

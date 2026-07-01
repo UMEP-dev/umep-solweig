@@ -186,7 +186,7 @@ def svf_for_voxels(
 
         # Loop for svf calculations of all voxel heights
         for i in loop_range:
-            
+
             if feedback is not None:
 
                 feedback.setProgressText(
@@ -375,7 +375,7 @@ def svf_kmeans(
 
         for i in cluster_heights:
             if cluster_heights.shape[0] > 1 and feedback is not None:
-                
+
                 feedback.setProgressText(
                     "SVF calculation based on K-means. Calculation "
                     + str(int(counter + 1))

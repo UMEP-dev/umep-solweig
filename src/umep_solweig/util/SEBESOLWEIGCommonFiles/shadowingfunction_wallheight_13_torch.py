@@ -99,9 +99,9 @@ def shadowingfunction_wallheight_13(
 
     # initialise parameters
     f = torch.clone(a)
-    dx = 0
-    dy = 0
-    dz = 0
+    dx = torch.tensor(0.0, device=device)
+    dy = torch.tensor(0.0, device=device)
+    dz = torch.tensor(0.0, device=device)
     temp = torch.zeros((sizex, sizey), device=device)
 
     # other loop parameters

@@ -230,7 +230,9 @@ def svfForProcessing153(
         # Preparations for wall temperature scheme
         if wallScheme:
             if feedback is not None:
-                feedback.setProgressText("Estimating view factors for wall voxels")
+                feedback.setProgressText(
+                    "Estimating view factors for wall voxels"
+                )
             (
                 voxelTable,
                 voxelId_list,

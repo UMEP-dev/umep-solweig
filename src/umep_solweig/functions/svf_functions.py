@@ -346,7 +346,9 @@ def svfForProcessing153(
 
             index += 1
             if feedback is not None:
-                feedback.setProgress(int(index * (100.0 / np.sum(aziinterval))))
+                feedback.setProgress(
+                    int(index * (100.0 / np.sum(aziinterval)))
+                )
 
     svfS = svfS + 3.0459e-004
     svfW = svfW + 3.0459e-004

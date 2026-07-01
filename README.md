@@ -31,7 +31,7 @@ python -m build
 Run inside you terminal from the project's root :
 
 ```bash
-pip install ./dist/umep_solweig-2026.1.0-py3-none-any.whl
+pip install ./dist/umep_solweig-{version_year}.{version}-py{python_major_version}-none-any.whl
 ```
 
 If you already have the package installed, do not forger to uninstall the current version before installing the new one with :
@@ -42,7 +42,7 @@ pip uninstall umep-solweig -y
 
 ## Development
 
-If you're working on the code, please do not forger to run the tests. **This is a realy important step, do not avoid it**. From the root run :
+If you're working on the code, please do not forger to run the tests after you've build and installed your local version of the package. **This is a realy important step, do not avoid it**. From the root run :
 
 ```bash
 python -m pytest -q ./tests/
