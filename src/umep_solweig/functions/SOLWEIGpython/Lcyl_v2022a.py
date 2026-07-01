@@ -153,4 +153,3 @@ def Lcyl_v2022a(
     )
 
     return Ldown, Lside, Least_, Lwest_, Lnorth_, Lsouth_
-    # return Ldown, Lside, Lside_sky, Lside_veg, Lside_sh, Lside_sun, Lside_ref, Lsky_normal, Lsky_down, Lsky_side, Least_, Lwest_, Lnorth_, Lsouth_

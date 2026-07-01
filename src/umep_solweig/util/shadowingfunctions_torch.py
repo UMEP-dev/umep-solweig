@@ -85,6 +85,9 @@ def shadowingfunctionglobalradiation(
     for step_idx in range(1, max_steps):
         index = float(step_idx)
 
+        if forsvf == 0 and feedback is not None:
+            feedback.setProgress(int(index * total))
+
         # 1. Project ground physical shadow offset (in pixels)
         shift_x = index * sinazimuth / scale
         shift_y = index * cosazimuth / scale
@@ -145,6 +148,12 @@ def shadowingfunction_20(
 
     sizex = a.shape[0]
     sizey = a.shape[1]
+
+    if forsvf == 0:
+        barstep = max(sizex, sizey)
+        total = 100.0 / barstep
+        if feedback is not None:
+            feedback.setProgress(0)
 
     dz = 0.0
     temp = torch.zeros((sizex, sizey), device=device, dtype=a.dtype)

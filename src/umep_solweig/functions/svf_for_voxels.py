@@ -138,6 +138,18 @@ def svf_for_voxels(
     # Loop for svf calculations of all voxel heights
     for i in loop_range:
 
+        if feedback is not None:
+            feedback.setProgressText(
+                "SVF calculation number "
+                + str(int(counter))
+                + " of "
+                + str(int(loop_range.shape[0]))
+            )
+
+            feedback.setProgressText(
+                "Increasing ground level with " + str(i) + " meters."
+            )
+
         # Elevate ground in dsm
         temp_dsm = ((dsm + i) * ground) + (dsm * (1 - ground))
 
@@ -193,6 +205,10 @@ def svf_for_voxels(
                 int(voxelTable[temp_y, 5][0]), int(voxelTable[temp_y, 6][0])
             ]
             svf_height_array[temp_y] = i + svf_height  # +svf_height
+
+        if feedback is not None and feedback.isCanceled():
+            feedback.setProgressText("Calculation cancelled")
+            break
 
         counter += 1
 
@@ -289,6 +305,21 @@ def svf_kmeans(
     counter = 0
 
     for i in cluster_heights:
+        if cluster_heights.shape[0] > 1 and feedback is not None:
+            feedback.setProgressText(
+                "SVF calculation based on K-means. Calculation "
+                + str(int(counter + 1))
+                + " of "
+                + str(int(cluster_heights.shape[0]))
+                + " clusters."
+            )
+            feedback.setProgressText(
+                "Mean wall height of cluster is "
+                + str(int(i + svf_height))
+                + " meters. Increasing ground level with "
+                + str(int(i))
+                + " meters."
+            )
 
         # Elevate ground in dsm
         temp_dsm = ((dsm + i) * ground) + (dsm * (1 - ground))
@@ -461,6 +492,10 @@ def svf_kmeans(
                 ]
                 # set svf_height to highest voxel for current wall
                 svf_height_array[temp_y] = temp_wall
+
+        if feedback is not None and feedback.isCanceled():
+            feedback.setProgressText("Calculation cancelled")
+            break
 
         counter += 1
 

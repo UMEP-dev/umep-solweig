@@ -37,6 +37,8 @@ def landcover_v2(lc_grid, mid, dtheta, feedback, imp_point, iter):
 
     j = int(0)
     for angle in np.arange(0, 360, dtheta):
+        if imp_point == 1 and feedback is not None:
+            feedback.setProgress(int(angle / 3.6))
 
         # d = sc.rotate(lc_grid, angle, order=0, reshape=False, mode='nearest') #old
         d = sc.rotate(

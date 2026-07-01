@@ -44,6 +44,8 @@ def shadowingfunctionglobalradiation(
     tanaltitudebyscale = np.tan(altitude) / scale
     # % main loop
     while amaxvalue >= dz and np.abs(dx) < sizex and np.abs(dy) < sizey:
+        if forsvf == 0 and feedback is not None:
+            feedback.setProgress(int(index * total))
 
         if (
             pibyfour <= azimuth
@@ -114,6 +116,8 @@ def shadowingfunction_20(
     if forsvf == 0:
         barstep = np.max([sizex, sizey])
         total = 100.0 / barstep
+        if feedback is not None:
+            feedback.setProgress(0)
 
     # initialise parameters
     dx = 0.0
@@ -152,7 +156,9 @@ def shadowingfunction_20(
 
     # main loop
     while (amaxvalue >= dz) and (np.abs(dx) < sizex) and (np.abs(dy) < sizey):
-
+        if forsvf == 0 and feedback is not None:
+            # dlg.progressBar.setValue(index)
+            feedback.setProgress(int(index * total))
         if (
             (pibyfour <= azimuth)
             and (azimuth < threetimespibyfour)

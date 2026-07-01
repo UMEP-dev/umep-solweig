@@ -646,6 +646,13 @@ def solweig_run(configPath, feedback):
         I0_array = np.zeros((DOY.shape[0]))
 
     for i in np.arange(0, Ta.__len__()):
+        if feedback is not None:
+            feedback.setProgress(
+                int(i * (100.0 / Ta.__len__()))
+            )  # move progressbar forward
+            if feedback.isCanceled():
+                feedback.setProgressText("Calculation cancelled")
+                break
 
         # Daily water body temperature
         if landcover == 1:
@@ -1134,7 +1141,8 @@ def solweig_run(configPath, feedback):
 
     # Save files for Tree Planter
     if configDict["outputtreeplanter"] == "1":  # outputTreeplanter:
-
+        if feedback is not None:
+            feedback.setProgressText("Saving files for Tree Planter tool")
         # Save DSM
         copyfile(
             configDict["filepath_dsm"], configDict["output_dir"] + "/DSM.tif"

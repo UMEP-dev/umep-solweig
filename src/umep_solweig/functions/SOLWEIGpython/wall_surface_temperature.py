@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 import math
-from .wall_cover import get_wall_cover
+from ...functions.SOLWEIGpython.wall_cover import get_wall_cover
 from .cylindric_wedge import cylindric_wedge_voxel
 
 # Stefan Boltzmans Constant

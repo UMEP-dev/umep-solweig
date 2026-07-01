@@ -3,7 +3,6 @@
 """
 
 from __future__ import absolute_import
-
 from .daylen_torch import daylen
 from ...util.SEBESOLWEIGCommonFiles.clearnessindex_2013b_torch import (
     clearnessindex_2013b,
@@ -212,6 +211,16 @@ def Solweig_2026a_calc(
     TgOut1 = old Ts model
     diffsh, ani = Used in anisotrpic models (Wallenberg et al. 2019, 2022)
     """
+
+    # # # Core program start # # #
+    # Instrument offset in degrees
+    t = 0.0
+
+    # Stefan Bolzmans Constant
+    SBC = 5.67051e-8
+
+    # Degrees to radians
+    deg2rad = torch.pi / 180
     device = (
         Tg.device
         if isinstance(Tg, torch.Tensor)
@@ -229,16 +238,6 @@ def Solweig_2026a_calc(
             )
         )
     )
-
-    # # # Core program start # # #
-    # Instrument offset in degrees
-    t = 0.0
-
-    # Stefan Bolzmans Constant
-    SBC = 5.67051e-8
-
-    # Degrees to radians
-    deg2rad = torch.pi / 180
 
     # Find sunrise decimal hour - new from 2014a
     _, _, _, SNUP = daylen(jday, location["latitude"])
@@ -677,7 +676,6 @@ def Solweig_2026a_calc(
                 shadow,
                 shadow_past,
             )
-
         else:
             # In the old scheme the ground surface temperature is equal to the air temperature during nighttime
             Tg = torch.ones((rows, cols), device=device) * Ta
@@ -821,9 +819,7 @@ def Solweig_2026a_calc(
 
             x = torch.transpose(torch.atleast_2d(skyvaultalt), device=device)
             y = torch.transpose(torch.atleast_2d(skyvaultazi), device=device)
-            z = torch.transpose(
-                torch.atleast_2d(patch_emissivities), device=device
-            )
+            z = torch.transpose(torch.atleast_2d(patch_emissivities), device=device)
 
             L_patches = torch.append(torch.append(x, y, axis=1), z, axis=1)
             del skyvaultalt, skyvaultazi, patch_emissivities, x, y, z

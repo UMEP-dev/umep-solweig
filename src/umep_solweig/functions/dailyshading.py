@@ -81,7 +81,9 @@ def dailyshading(
         dirwalls = np.zeros((sizex, sizey))
 
     for i in range(0, itera):
-
+        if feedback.isCanceled():
+            feedback.setProgressText("Calculation cancelled")
+            break
         if onetime == 0:
             minu = int(timeInterval * i)
             if minu >= 60:

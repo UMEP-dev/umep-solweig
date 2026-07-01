@@ -11,11 +11,11 @@ from umep_solweig.wallalgorithm import processAlgorithm
 
 # FIXED: Look in the tests/ folder instead of the project root
 TEST_DIR = Path(__file__).resolve().parent
-DSM_PATH = TEST_DIR / "dsm.tif"
+DSM_PATH = TEST_DIR / "./tests_data/dsm.tif"
 
 # Keep outputs in the root or tests folder (your choice, let's keep them in tests for clean-up)
-OUTPUT_HEIGHT_PATH = TEST_DIR / "wall_height_test.tif"
-OUTPUT_ASPECT_PATH = TEST_DIR / "wall_aspect_test.tif"
+OUTPUT_HEIGHT_PATH = TEST_DIR / "./tests_out/wall_height_test.tif"
+OUTPUT_ASPECT_PATH = TEST_DIR / "./tests_out/wall_aspect_test.tif"
 
 
 def test_wall_height_algorithm_runs_on_dsm_file():

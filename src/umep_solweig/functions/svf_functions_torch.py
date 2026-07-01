@@ -17,7 +17,7 @@ def _to_tensor(x, device, dtype=torch.float32):
 
 # from ..functions.wallalgorithms import findwalls
 from . import wallalgorithms_torch as wa
-from .. import svf_for_voxels_torch as svfv
+from . import svf_for_voxels_torch as svfv
 from ..util.SEBESOLWEIGCommonFiles import (
     shadowingfunction_wallheight_13_torch as shb,
 )
@@ -229,6 +229,8 @@ def svfForProcessing153(
 
         # Preparations for wall temperature scheme
         if wallScheme:
+            if feedback is not None:
+                feedback.setProgressText("Estimating view factors for wall voxels")
             (
                 voxelTable,
                 voxelId_list,
@@ -270,7 +272,9 @@ def svfForProcessing153(
         index = 0
         for i in range(0, skyvaultaltint.shape[0]):
             for j in range(0, int(aziinterval[int(i)].item())):
-
+                if feedback is not None and feedback.isCanceled():
+                    feedback.setProgressText("Calculation cancelled")
+                    break
                 altitude = torch.tensor(
                     float(skyvaultaltint[int(i)].item()), device=device
                 )
@@ -425,6 +429,10 @@ def svfForProcessing153(
                             svfNaveg = svfNaveg + weight * vbshvegsh
 
                 index += 1
+                if feedback is not None:
+                    feedback.setProgress(
+                        int(index * (100.0 / torch.sum(aziinterval)))
+                    )
 
         svfS = svfS + 3.0459e-004
         svfW = svfW + 3.0459e-004
@@ -573,7 +581,9 @@ def svfForProcessing655(
 
         for i in range(0, iangle.shape[0] - 1):
             for j in range(0, int(aziinterval[int(i)].item())):
-
+                if feedback is not None and feedback.isCanceled():
+                    feedback.setProgressText("Calculation cancelled")
+                    break
                 altitude = float(iangle[int(i)].item())
                 azimuth = float(iazimuth[int(index) - 1].item())
 
@@ -645,6 +655,8 @@ def svfForProcessing655(
                             svfNaveg = svfNaveg + weight * vbshvegsh
 
                 index += 1
+                if feedback is not None:
+                    feedback.setProgress(int(index * (100.0 / 655.0)))
 
         svfS = svfS + 3.0459e-004
         svfW = svfW + 3.0459e-004

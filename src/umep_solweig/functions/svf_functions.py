@@ -175,6 +175,8 @@ def svfForProcessing153(
 
     # Preparations for wall temperature scheme
     if wallScheme:
+        if feedback is not None:
+            feedback.setProgressText("Estimating view factors for wall voxels")
         (
             voxelTable,
             voxelId_list,
@@ -206,7 +208,9 @@ def svfForProcessing153(
     index = int(0)
     for i in range(0, skyvaultaltint.shape[0]):
         for j in np.arange(0, (aziinterval[int(i)])):
-
+            if feedback is not None and feedback.isCanceled():
+                feedback.setProgressText("Calculation cancelled")
+                break
             altitude = skyvaultaltint[int(i)]
             azimuth = iazimuth[int(index)]
 
@@ -341,6 +345,8 @@ def svfForProcessing153(
                         svfNaveg = svfNaveg + weight * vbshvegsh
 
             index += 1
+            if feedback is not None:
+                feedback.setProgress(int(index * (100.0 / np.sum(aziinterval))))
 
     svfS = svfS + 3.0459e-004
     svfW = svfW + 3.0459e-004
@@ -450,7 +456,9 @@ def svfForProcessing655(dsm, vegdem, vegdem2, scale, usevegdem, feedback):
 
     for i in np.arange(0, iangle.shape[0] - 1):
         for j in np.arange(0, (aziinterval[int(i)])):
-
+            if feedback is not None and feedback.isCanceled():
+                feedback.setProgressText("Calculation cancelled")
+                break
             altitude = iangle[int(i)]
             azimuth = iazimuth[int(index) - 1]
 
@@ -515,6 +523,8 @@ def svfForProcessing655(dsm, vegdem, vegdem2, scale, usevegdem, feedback):
                         svfNaveg = svfNaveg + weight * vbshvegsh
 
             index += 1
+            if feedback is not None:
+                feedback.setProgress(int(index * (100.0 / 655.0)))
 
     svfS = svfS + 3.0459e-004
     svfW = svfW + 3.0459e-004

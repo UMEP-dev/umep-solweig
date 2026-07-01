@@ -142,12 +142,9 @@ def fillWallOfInterest(
                 header = "yyyy id   it imin dectime Ta  SVF "
                 for temp_header in output_vars:
                     header += "    " + temp_header
-                # header = header + voxelHeader
 
                 # Part of file name (wallid), i.e. WOI_wallid.txt
-                # woiname = voxelTable.loc[((voxelTable['ypos'] == woisxy[k, 2]) & (voxelTable['xpos'] == woisxy[k, 1])), 'wallId'].to_numpy()[0]
                 woi_save = []  #
-                # data_out = outputDir + '/WOI_' + str(woiname) + '.txt'
                 np.savetxt(
                     data_out,
                     woi_save,

@@ -223,16 +223,16 @@ def shadowingfunction_wallheight_23(
     shvoveg = (shvoveg - a) * vegsh  # Vegetation shadow volume
     vegsh = 1 - vegsh
     vbshvegsh = 1 - vbshvegsh
-    # print(np.max(shvoveg))
+    
     wallsh, wallsun, wallshve, facesh, facesun = shade_on_walls(
         azimuth, aspect, walls, a, f, shvoveg
     )
-    # print(np.max(wallshve))
+    
     if walls_scheme is not False:
-        wallsh_, wallsun_, wallshve_, facesh_, facesun_ = shade_on_walls(
+        wallsh_, _, wallshve_, _, _ = shade_on_walls(
             azimuth, aspect_scheme, walls_scheme, a, f, shvoveg
         )
-        # print(np.max(wallshve_))
+        
         shade_on_wall = wallsh_.copy()
         shade_on_wall[shade_on_wall < wallshve_] = wallshve_[
             shade_on_wall < wallshve_
