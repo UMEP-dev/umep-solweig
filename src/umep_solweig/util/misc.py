@@ -20,7 +20,9 @@ try:
 
 except:
     from osgeo import gdal
+
     GDAL_ENV = True
+
 
 # Slope and aspect used in SEBE and Wall aspect
 def get_ders(dsm, scale):
@@ -179,16 +181,25 @@ def check_path(path_str: str | Path, make_dir: bool = False) -> Path:
         if make_dir:
             path.parent.mkdir(parents=True, exist_ok=True)
         else:
-            raise OSError(f"Parent directory {path} does not exist. Set make_dir=True to create it.")
+            raise OSError(
+                f"Parent directory {path} does not exist. Set make_dir=True to create it."
+            )
     if not path.exists() and not path.suffix:
         if make_dir:
             path.mkdir(parents=True, exist_ok=True)
         else:
-            raise OSError(f"Path {path} does not exist. Set make_dir=True to create it.")
+            raise OSError(
+                f"Path {path} does not exist. Set make_dir=True to create it."
+            )
     return path
 
+
 def save_raster(
-    out_path_str: str, data_arr: np.ndarray, trf_arr: list[float], crs_wkt: str, no_data_val: float = -9999
+    out_path_str: str,
+    data_arr: np.ndarray,
+    trf_arr: list[float],
+    crs_wkt: str,
+    no_data_val: float = -9999,
 ):
     attempts = 2
     while attempts > 0:
@@ -239,7 +250,7 @@ def save_raster(
                 band.SetNoDataValue(no_data_val)
                 ds.FlushCache()
                 ds = None
-                return# Success, exit the function
+                return  # Success, exit the function
         except Exception as e:
             print(f"Error saving raster, attempts left {attempts}: {e}")
             if attempts == 0:

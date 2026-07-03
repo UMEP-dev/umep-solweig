@@ -3,7 +3,6 @@ import numpy as np
 
 def create_patches(patch_option):
 
-
     # patch_option = 1 = 145 patches (Robinson & Stone, 2004)
     # patch_option = 2 = 153 patches (Wallenberg et al., 2022)
     # patch_option = 3 = 306 patches -> test
@@ -47,7 +46,6 @@ def create_patches(patch_option):
             [3, 9, 15, 21, 27, 33, 39, 45, 51, 57, 63, 69, 75, 81, 90]
         )
         patches_in_band = np.array(
-          
             [
                 31 * 2,
                 31 * 2,
@@ -66,9 +64,7 @@ def create_patches(patch_option):
                 1,
             ]
         )
-        azistart = np.array(
-            [0, 0, 4, 4, 2, 2, 5, 5, 8, 8, 0, 0, 10, 10, 0]
-        )
+        azistart = np.array([0, 0, 4, 4, 2, 2, 5, 5, 8, 8, 0, 0, 10, 10, 0])
 
     skyvaultaziint = np.array([360 / patches for patches in patches_in_band])
 
@@ -78,7 +74,6 @@ def create_patches(patch_option):
             skyvaultazi = np.append(
                 skyvaultazi, k * skyvaultaziint[j] + azistart[j]
             )
-
 
     return (
         skyvaultalt,

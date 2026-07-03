@@ -5,6 +5,7 @@ except:
 
 author = "xlinfr and Lemap01"
 
+
 def create_patches(patch_option, device):
 
     deg2rad = torch.pi / 180

@@ -20,28 +20,31 @@ __version_info__ = tuple(map(int, __version__.split(".")[:3]))
 
 # Core imports from main modules
 try:
-    from .SOLWEIGpython import (
-        Solweig_run,
-        Solweig_2026a_calc_forprocessing,
-        PET_calculations,
+    from .functions.SOLWEIGpython import (
         UTCI_calculations,
     )
 except ImportError:
     pass
 
 
-
 # Optional GPU/torch imports
 try:
-    from .SOLWEIGpython import (
+    from .functions.SOLWEIGpython import (
         Solweig_2026a_calc_forprocessing_torch,
     )
+
     HAS_TORCH = True
 except ImportError:
     HAS_TORCH = False
 
 # Package-level convenient submodules
-from .SOLWEIGpython import Solweig_run_torch
+from .functions.SOLWEIGpython import (
+    PET_calculations,
+    Solweig_2026a_calc_forprocessing,
+    Solweig_run,
+)
+
+from .functions.SOLWEIGpython import Solweig_run_torch
 
 from . import solweig_run
 from . import solweig_run_gpu
@@ -65,7 +68,9 @@ __all__ = [
 
 # Add torch variants if available
 if HAS_TORCH:
-    __all__.extend([
-        "Solweig_run_torch",
-        "Solweig_2026a_calc_forprocessing_torch",
-    ])
+    __all__.extend(
+        [
+            "Solweig_run_torch",
+            "Solweig_2026a_calc_forprocessing_torch",
+        ]
+    )

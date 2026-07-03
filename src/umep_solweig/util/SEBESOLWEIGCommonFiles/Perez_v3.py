@@ -314,7 +314,6 @@ def Perez_v3(zen, azimuth, radD, radI, jday, patchchoice, patch_option):
     # Normalisation
     lv = lv / np.sum(lv)
 
-
     if patchchoice == 1:
         x = np.transpose(np.atleast_2d(skyvaultalt * rad2deg))
         y = np.transpose(np.atleast_2d(skyvaultazi * rad2deg))

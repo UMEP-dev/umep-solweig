@@ -6,6 +6,8 @@ try:
 except:
     pass
 author = "xlinfr and Lemap01"
+
+
 def shade_on_walls(azimuth, aspect, walls, dsm, f, shvoveg):
     # wall shadows wall parameterization
     wallbol = (walls > 0).float()
@@ -127,7 +129,9 @@ def shadowingfunction_wallheight_23(
     vbshvegsh = torch.clone(sh)  # vegetation blocking buildings
     vegsh = torch.add(
         torch.zeros((sizex, sizey), device=device), bushplant
-    ).to(torch.float64)  # vegetation shadow
+    ).to(
+        torch.float64
+    )  # vegetation shadow
     f = torch.clone(a)
     shvoveg = torch.clone(vegdem)  # for vegetation shadowvolume
 
@@ -151,12 +155,20 @@ def shadowingfunction_wallheight_23(
     dzprev = 0
 
     # main loop
-    while (amaxvalue >= dz) and (torch.abs(dx) < sizex) and (torch.abs(dy) < sizey):
+    while (
+        (amaxvalue >= dz)
+        and (torch.abs(dx) < sizex)
+        and (torch.abs(dy) < sizey)
+    ):
         if ((pibyfour <= azimuth) and (azimuth < threetimespibyfour)) or (
             (fivetimespibyfour <= azimuth) and (azimuth < seventimespibyfour)
         ):
             dy = signsinazimuth * index
-            dx = -1 * signcosazimuth * torch.abs(torch.round(index / tanazimuth))
+            dx = (
+                -1
+                * signcosazimuth
+                * torch.abs(torch.round(index / tanazimuth))
+            )
             ds = dssin
         else:
             dy = signsinazimuth * torch.abs(torch.round(index * tanazimuth))
@@ -230,7 +242,7 @@ def shadowingfunction_wallheight_23(
     wallsh, wallsun, wallshve, facesh, facesun = shade_on_walls(
         azimuth, aspect, walls, a, f, shvoveg
     )
-    
+
     if walls_scheme is not False:
         wallsh_, wallsun_, wallshve_, facesh_, facesun_ = shade_on_walls(
             azimuth, aspect_scheme, walls_scheme, a, f, shvoveg

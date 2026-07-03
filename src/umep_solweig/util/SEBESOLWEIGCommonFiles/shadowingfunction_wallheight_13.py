@@ -152,7 +152,7 @@ def shadowingfunction_wallheight_13(
         f = np.fmax(f, temp)  # Moving building shadow
 
         index = index + 1
-        
+
     sh, wallsh, wallsun, facesh, facesun = shade_on_walls(
         azimuth, aspect, walls, a, f
     )
