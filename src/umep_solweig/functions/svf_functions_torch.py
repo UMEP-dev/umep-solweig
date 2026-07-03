@@ -71,50 +71,51 @@ def svf_angles_100121(device):
     azi19 = torch.arange(17.0, 360.0, 360.0 / 8.0, device=device)  # %45
     azi20 = torch.tensor([0.0], device=device)  # %360
     iazimuth = torch.cat(
-            (
-                azi1,
-                azi2,
-                azi3,
-                azi4,
-                azi5,
-                azi6,
-                azi7,
-                azi8,
-                azi9,
-                azi10,
-                azi11,
-                azi12,
-                azi13,
-                azi14,
-                azi15,
-                azi16,
-                azi17,
-                azi18,
-                azi19,
-                azi20,
-            )
+        (
+            azi1,
+            azi2,
+            azi3,
+            azi4,
+            azi5,
+            azi6,
+            azi7,
+            azi8,
+            azi9,
+            azi10,
+            azi11,
+            azi12,
+            azi13,
+            azi14,
+            azi15,
+            azi16,
+            azi17,
+            azi18,
+            azi19,
+            azi20,
         )
-    aziinterval = torch.tensor([
-                16.0,
-                16.0,
-                32.0,
-                32.0,
-                40.0,
-                48.0,
-                48.0,
-                48.0,
-                52.0,
-                52.0,
-                48.0,
-                44.0,
-                44.0,
-                40.0,
-                32.0,
-                24.0,
-                16.0,
-                12.0,
-                8.0,
-                1.0,
+    )
+    aziinterval = torch.tensor(
+        [
+            16.0,
+            16.0,
+            32.0,
+            32.0,
+            40.0,
+            48.0,
+            48.0,
+            48.0,
+            52.0,
+            52.0,
+            48.0,
+            44.0,
+            44.0,
+            40.0,
+            32.0,
+            24.0,
+            16.0,
+            12.0,
+            8.0,
+            1.0,
         ],
         device=device,
     )
@@ -301,7 +302,7 @@ def svfForProcessing153(
                             bush,
                             walls,
                             aspect * torch.pi / 180,
-                            device
+                            device,
                         )
                         vegshmat[:, :, index] = vegsh
                         vbshvegshmat[:, :, index] = vbshvegsh
@@ -406,7 +407,9 @@ def svfForProcessing153(
 
                 if usevegdem == 1:
                     for k in torch.arange(
-                        annulino[int(i)] + 1, (annulino[int(i + 1.0)]) + 1, device=device
+                        annulino[int(i)] + 1,
+                        (annulino[int(i + 1.0)]) + 1,
+                        device=device,
                     ):
                         # % changed to include 90
                         weight = annulus_weight(k, aziinterval[i], device)
@@ -650,7 +653,9 @@ def svfForProcessing655(
 
                 if usevegdem == 1:
                     for k in torch.arange(
-                        annulino[int(i)] + 1, (annulino[int(i + 1.0)]) + 1, device=device
+                        annulino[int(i)] + 1,
+                        (annulino[int(i + 1.0)]) + 1,
+                        device=device,
                     ):
                         # % changed to include 90
                         weight = annulus_weight(k, aziinterval[i], device)

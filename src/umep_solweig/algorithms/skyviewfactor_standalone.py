@@ -309,8 +309,6 @@ def processAlgorithm(
                 feedback,
             )
 
-
-
     # print('Time to finish first SVF calculation = ' + str(run_time))
     if wallScheme == 1:
         voxelTable = ret["voxelTable"]
@@ -493,7 +491,10 @@ def processAlgorithm(
                     svfbu_array,
                     svfveg_array,
                     svfaveg_array,
-                    svf_height_array,dsm, vegdsm, vegdsm2
+                    svf_height_array,
+                    dsm,
+                    vegdsm,
+                    vegdsm2,
                 )
                 if device.type == "cuda":
                     torch.cuda.empty_cache()
@@ -853,24 +854,43 @@ def processAlgorithm(
         gc.collect()  # Force Python garbage collection
 
     print("Sky View Factor: SVF grid(s) successfully generated")
-    
 
     if use_gpu:
         return {
-            "svf": ret.get("svf").cpu().detach().numpy() if isinstance(ret, dict) else ret,
-            "svfE": ret.get("svfE").cpu().detach().numpy() if isinstance(ret, dict) else None,
-            "svfS": ret.get("svfS").cpu().detach().numpy() if isinstance(ret, dict) else None,
-            "svfW": ret.get("svfW").cpu().detach().numpy() if isinstance(ret, dict) else None,
-            "svfN": ret.get("svfN").cpu().detach().numpy() if isinstance(ret, dict) else None,
+            "svf": (
+                ret.get("svf").cpu().detach().numpy()
+                if isinstance(ret, dict)
+                else ret
+            ),
+            "svfE": (
+                ret.get("svfE").cpu().detach().numpy()
+                if isinstance(ret, dict)
+                else None
+            ),
+            "svfS": (
+                ret.get("svfS").cpu().detach().numpy()
+                if isinstance(ret, dict)
+                else None
+            ),
+            "svfW": (
+                ret.get("svfW").cpu().detach().numpy()
+                if isinstance(ret, dict)
+                else None
+            ),
+            "svfN": (
+                ret.get("svfN").cpu().detach().numpy()
+                if isinstance(ret, dict)
+                else None
+            ),
             "output_dir": str(outputDir) if outputDir is not None else None,
             "output_file": str(outputFile) if outputFile is not None else None,
             "wallScheme": wallScheme,
             "use_gpu": use_gpu,
             "aniso": aniso,
         }
-        
+
     else:
-            return {
+        return {
             "svf": ret.get("svf") if isinstance(ret, dict) else ret,
             "svfE": ret.get("svfE") if isinstance(ret, dict) else None,
             "svfS": ret.get("svfS") if isinstance(ret, dict) else None,

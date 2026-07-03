@@ -479,13 +479,19 @@ def svf_kmeans(
                     )
                     svfbu_array[temp_y] = svfbu[
                         int(voxelTable[temp_y, 5]), int(voxelTable[temp_y, 6])
-                    ].to(svfbu_array.dtype)  # save svfbu for current wall pixel
+                    ].to(
+                        svfbu_array.dtype
+                    )  # save svfbu for current wall pixel
                     svfveg_array[temp_y] = svfveg[
                         int(voxelTable[temp_y, 5]), int(voxelTable[temp_y, 6])
-                    ].to(svfveg_array.dtype)  # save svfveg for current wall pixel
+                    ].to(
+                        svfveg_array.dtype
+                    )  # save svfveg for current wall pixel
                     svfaveg_array[temp_y] = svfaveg[
                         int(voxelTable[temp_y, 5]), int(voxelTable[temp_y, 6])
-                    ].to(svfaveg_array.dtype)  # save svfaveg for current wall pixel
+                    ].to(
+                        svfaveg_array.dtype
+                    )  # save svfaveg for current wall pixel
                     svf_height_array[temp_y] = (
                         temp_wall  # set svf_height to highest voxel for current wall
                     )
@@ -529,13 +535,19 @@ def svf_kmeans(
                         svf_array[temp_y] = 0.5
                     svfbu_array[temp_y] = svfbu[
                         int(voxelTable[temp_y, 5]), int(voxelTable[temp_y, 6])
-                    ].to(svfbu_array.dtype)  # save svfbu for current wall pixel
+                    ].to(
+                        svfbu_array.dtype
+                    )  # save svfbu for current wall pixel
                     svfveg_array[temp_y] = svfveg[
                         int(voxelTable[temp_y, 5]), int(voxelTable[temp_y, 6])
-                    ].to(svfveg_array.dtype)  # save svfveg for current wall pixel
+                    ].to(
+                        svfveg_array.dtype
+                    )  # save svfveg for current wall pixel
                     svfaveg_array[temp_y] = svfaveg[
                         int(voxelTable[temp_y, 5]), int(voxelTable[temp_y, 6])
-                    ].to(svfaveg_array.dtype)  # save svfaveg for current wall pixel
+                    ].to(
+                        svfaveg_array.dtype
+                    )  # save svfaveg for current wall pixel
                     svf_height_array[temp_y] = (
                         temp_wall  # set svf_height to highest voxel for current wall
                     )
