@@ -3,7 +3,8 @@ name: Publish Python Package
 on:
   push:
     branches: [ main ]
-    tags: '*'
+    tags:
+      - '*'
   pull_request:
     branches: "*"
 
@@ -11,7 +12,7 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     
-    # ÉTAPE CRITIQUE : Permet l'authentification OpenID Connect (OIDC) avec PyPI
+
     permissions:
       id-token: write
       contents: read
@@ -40,6 +41,7 @@ jobs:
           echo "Package contents:"
           tar -tzf dist/*.tar.gz | head -20
 
+      # Publication vers Test PyPI (Déclenché par un push sur main)
       - name: Publish distribution to Test PyPI
         if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: pypa/gh-action-pypi-publish@v1.12.4
@@ -49,6 +51,7 @@ jobs:
           skip_existing: true
           repository_url: https://test.pypi.org/legacy/
 
+      # Publication vers PyPI Officiel (Déclenché par un Tag)
       - name: Publish distribution to PyPI
         if: startsWith(github.ref, 'refs/tags')
         uses: pypa/gh-action-pypi-publish@v1.12.4
