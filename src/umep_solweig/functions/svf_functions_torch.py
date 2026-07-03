@@ -50,28 +50,27 @@ def annulus_weight(altitude, aziinterval, device):
 
 
 def svf_angles_100121(device):
-    azi1 = torch.arange(1.0, 360.0, 360.0 / 16.0)  # %22.5
-    azi2 = torch.arange(12.0, 360.0, 360.0 / 16.0)  # %22.5
-    azi3 = torch.arange(5.0, 360.0, 360.0 / 32.0)  # %11.25
-    azi4 = torch.arange(2.0, 360.0, 360.0 / 32.0)  # %11.25
-    azi5 = torch.arange(4.0, 360.0, 360.0 / 40.0)  # %9
-    azi6 = torch.arange(7.0, 360.0, 360.0 / 48.0)  # %7.50
-    azi7 = torch.arange(6.0, 360.0, 360.0 / 48.0)  # %7.50
-    azi8 = torch.arange(1.0, 360.0, 360.0 / 48.0)  # %7.50
-    azi9 = torch.arange(4.0, 359.0, 360.0 / 52.0)  # %6.9231
-    azi10 = torch.arange(5.0, 360.0, 360.0 / 52.0)  # %6.9231
-    azi11 = torch.arange(1.0, 360.0, 360.0 / 48.0)  # %7.50
-    azi12 = torch.arange(0.0, 359.0, 360.0 / 44.0)  # %8.1818
-    azi13 = torch.arange(3.0, 360.0, 360.0 / 44.0)  # %8.1818
-    azi14 = torch.arange(2.0, 360.0, 360.0 / 40.0)  # %9
-    azi15 = torch.arange(7.0, 360.0, 360.0 / 32.0)  # %10
-    azi16 = torch.arange(3.0, 360.0, 360.0 / 24.0)  # %11.25
-    azi17 = torch.arange(10.0, 360.0, 360.0 / 16.0)  # %15
-    azi18 = torch.arange(19.0, 360.0, 360.0 / 12.0)  # %22.5
-    azi19 = torch.arange(17.0, 360.0, 360.0 / 8.0)  # %45
-    azi20 = 0.0  # %360
-    iazimuth = torch.tensor(
-        torch.hstack(
+    azi1 = torch.arange(1.0, 360.0, 360.0 / 16.0, device=device)  # %22.5
+    azi2 = torch.arange(12.0, 360.0, 360.0 / 16.0, device=device)  # %22.5
+    azi3 = torch.arange(5.0, 360.0, 360.0 / 32.0, device=device)  # %11.25
+    azi4 = torch.arange(2.0, 360.0, 360.0 / 32.0, device=device)  # %11.25
+    azi5 = torch.arange(4.0, 360.0, 360.0 / 40.0, device=device)  # %9
+    azi6 = torch.arange(7.0, 360.0, 360.0 / 48.0, device=device)  # %7.50
+    azi7 = torch.arange(6.0, 360.0, 360.0 / 48.0, device=device)  # %7.50
+    azi8 = torch.arange(1.0, 360.0, 360.0 / 48.0, device=device)  # %7.50
+    azi9 = torch.arange(4.0, 359.0, 360.0 / 52.0, device=device)  # %6.9231
+    azi10 = torch.arange(5.0, 360.0, 360.0 / 52.0, device=device)  # %6.9231
+    azi11 = torch.arange(1.0, 360.0, 360.0 / 48.0, device=device)  # %7.50
+    azi12 = torch.arange(0.0, 359.0, 360.0 / 44.0, device=device)  # %8.1818
+    azi13 = torch.arange(3.0, 360.0, 360.0 / 44.0, device=device)  # %8.1818
+    azi14 = torch.arange(2.0, 360.0, 360.0 / 40.0, device=device)  # %9
+    azi15 = torch.arange(7.0, 360.0, 360.0 / 32.0, device=device)  # %10
+    azi16 = torch.arange(3.0, 360.0, 360.0 / 24.0, device=device)  # %11.25
+    azi17 = torch.arange(10.0, 360.0, 360.0 / 16.0, device=device)  # %15
+    azi18 = torch.arange(19.0, 360.0, 360.0 / 12.0, device=device)  # %22.5
+    azi19 = torch.arange(17.0, 360.0, 360.0 / 8.0, device=device)  # %45
+    azi20 = torch.tensor([0.0], device=device)  # %360
+    iazimuth = torch.cat(
             (
                 azi1,
                 azi2,
@@ -94,12 +93,8 @@ def svf_angles_100121(device):
                 azi19,
                 azi20,
             )
-        ),
-        device=device,
-    )
-    aziinterval = torch.tensor(
-        torch.hstack(
-            (
+        )
+    aziinterval = torch.tensor([
                 16.0,
                 16.0,
                 32.0,
@@ -120,8 +115,7 @@ def svf_angles_100121(device):
                 12.0,
                 8.0,
                 1.0,
-            )
-        ),
+        ],
         device=device,
     )
     angleresult = {"iazimuth": iazimuth, "aziinterval": aziinterval}
@@ -307,6 +301,7 @@ def svfForProcessing153(
                             bush,
                             walls,
                             aspect * torch.pi / 180,
+                            device
                         )
                         vegshmat[:, :, index] = vegsh
                         vbshvegshmat[:, :, index] = vbshvegsh
@@ -319,6 +314,7 @@ def svfForProcessing153(
                                 scale,
                                 walls,
                                 aspect * torch.pi / 180.0,
+                                device,
                             )
                         )
                         vegsh = torch.ones(
@@ -410,7 +406,7 @@ def svfForProcessing153(
 
                 if usevegdem == 1:
                     for k in torch.arange(
-                        annulino[int(i)] + 1, (annulino[int(i + 1.0)]) + 1
+                        annulino[int(i)] + 1, (annulino[int(i + 1.0)]) + 1, device=device
                     ):
                         # % changed to include 90
                         weight = annulus_weight(k, aziinterval[i], device)
@@ -490,7 +486,7 @@ def svfForProcessing153(
         }
 
         # Delete input and intermediate tensors not needed outside
-        del dsm, vegdem, vegdem2, demlayer, bush, vegmax, amaxvalue, last
+        del dsm, vegdem, vegdem2, demlayer, bush, vegmax, amaxvalue
 
         # Delete patch configuration tensors
         del (
@@ -524,7 +520,7 @@ def svfForProcessing655(
     scale,
     usevegdem,
     feedback,
-    device=torch.device("cpu"),
+    device,
 ):
 
     with torch.no_grad():
@@ -566,13 +562,25 @@ def svfForProcessing655(
 
         noa = torch.tensor(19.0, device=device)
         # % No. of anglesteps minus 1
-        step = 89.0 / noa
+        step = torch.tensor(89.0 / noa, device=device)
+        print("step device ", step.get_device())
+        print(device)
         iangle = torch.tensor(
-            torch.hstack((torch.arange(step / 2.0, 89.0, step), 90.0)),
+            torch.hstack(
+                (
+                    torch.arange(step / 2.0, 89.0, step, device=device),
+                    torch.tensor([90.0], device=device),
+                )
+            ),
             device=device,
         )
         annulino = torch.tensor(
-            torch.hstack((torch.round(torch.arange(0.0, 89.0, step)), 90.0)),
+            torch.hstack(
+                (
+                    torch.round(torch.arange(0.0, 89.0, step, device=device)),
+                    torch.tensor([90.0], device=device),
+                )
+            ),
             device=device,
         )
         angleresult = svf_angles_100121(device)
@@ -586,8 +594,14 @@ def svfForProcessing655(
                 if feedback is not None and feedback.isCanceled():
                     feedback.setProgressText("Calculation cancelled")
                     break
-                altitude = float(iangle[int(i)].item())
-                azimuth = float(iazimuth[int(index) - 1].item())
+                altitude = torch.tensor(
+                    iangle[int(i)].item(), dtype=torch.float32, device=device
+                )
+                azimuth = torch.tensor(
+                    iazimuth[int(index) - 1].item(),
+                    dtype=torch.float32,
+                    device=device,
+                )
 
                 # Casting shadow
                 if usevegdem == 1:
@@ -636,7 +650,7 @@ def svfForProcessing655(
 
                 if usevegdem == 1:
                     for k in torch.arange(
-                        annulino[int(i)] + 1, (annulino[int(i + 1.0)]) + 1
+                        annulino[int(i)] + 1, (annulino[int(i + 1.0)]) + 1, device=device
                     ):
                         # % changed to include 90
                         weight = annulus_weight(k, aziinterval[i], device)

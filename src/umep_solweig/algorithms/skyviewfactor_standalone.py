@@ -185,10 +185,11 @@ def processAlgorithm(
 
     if use_gpu:
         dsm = torch.from_numpy(dsm).to(device)
+        scale = torch.tensor(scale, device=device)
 
     if wallScheme:
         if input_dem is None:
-            raise Exception("DEM layer required for wall surface scheme!")
+            raise ValueError("DEM layer required for wall surface scheme!")
         gdal_dem, dem = _resolve_raster_input(input_dem, name="DEM")
         if gdal_dem is None:
             raise ValueError("Unable to open DEM raster")
@@ -290,7 +291,7 @@ def processAlgorithm(
                 scale,
                 usevegdem,
                 feedback,
-                device=device,
+                device,
             )
 
             if device.type == "cuda":
@@ -308,13 +309,7 @@ def processAlgorithm(
                 feedback,
             )
 
-    # Clean up large intermediate tensors after SVF calculation
-    if use_gpu:
-        del dsm, vegdsm, vegdsm2
-        if dem is not None:
-            del dem
-        if device.type == "cuda":
-            torch.cuda.empty_cache()
+
 
     # print('Time to finish first SVF calculation = ' + str(run_time))
     if wallScheme == 1:
@@ -498,7 +493,7 @@ def processAlgorithm(
                     svfbu_array,
                     svfveg_array,
                     svfaveg_array,
-                    svf_height_array,
+                    svf_height_array,dsm, vegdsm, vegdsm2
                 )
                 if device.type == "cuda":
                     torch.cuda.empty_cache()
@@ -780,7 +775,7 @@ def processAlgorithm(
             misc.saveraster(
                 gdal_dsm, filename, svftotal.cpu().detach().numpy()
             )
-            del svftotal, svfbu, svfveg
+            del svftotal, svfbu
             if device.type == "cuda":
                 torch.cuda.empty_cache()
             elif device.type == "xpu":
@@ -858,16 +853,32 @@ def processAlgorithm(
         gc.collect()  # Force Python garbage collection
 
     print("Sky View Factor: SVF grid(s) successfully generated")
+    
 
-    return {
-        "svf": ret.get("svf") if isinstance(ret, dict) else ret,
-        "svfE": ret.get("svfE") if isinstance(ret, dict) else None,
-        "svfS": ret.get("svfS") if isinstance(ret, dict) else None,
-        "svfW": ret.get("svfW") if isinstance(ret, dict) else None,
-        "svfN": ret.get("svfN") if isinstance(ret, dict) else None,
-        "output_dir": str(outputDir) if outputDir is not None else None,
-        "output_file": str(outputFile) if outputFile is not None else None,
-        "wallScheme": wallScheme,
-        "use_gpu": use_gpu,
-        "aniso": aniso,
-    }
+    if use_gpu:
+        return {
+            "svf": ret.get("svf").cpu().detach().numpy() if isinstance(ret, dict) else ret,
+            "svfE": ret.get("svfE").cpu().detach().numpy() if isinstance(ret, dict) else None,
+            "svfS": ret.get("svfS").cpu().detach().numpy() if isinstance(ret, dict) else None,
+            "svfW": ret.get("svfW").cpu().detach().numpy() if isinstance(ret, dict) else None,
+            "svfN": ret.get("svfN").cpu().detach().numpy() if isinstance(ret, dict) else None,
+            "output_dir": str(outputDir) if outputDir is not None else None,
+            "output_file": str(outputFile) if outputFile is not None else None,
+            "wallScheme": wallScheme,
+            "use_gpu": use_gpu,
+            "aniso": aniso,
+        }
+        
+    else:
+            return {
+            "svf": ret.get("svf") if isinstance(ret, dict) else ret,
+            "svfE": ret.get("svfE") if isinstance(ret, dict) else None,
+            "svfS": ret.get("svfS") if isinstance(ret, dict) else None,
+            "svfW": ret.get("svfW") if isinstance(ret, dict) else None,
+            "svfN": ret.get("svfN") if isinstance(ret, dict) else None,
+            "output_dir": str(outputDir) if outputDir is not None else None,
+            "output_file": str(outputFile) if outputFile is not None else None,
+            "wallScheme": wallScheme,
+            "use_gpu": use_gpu,
+            "aniso": aniso,
+        }

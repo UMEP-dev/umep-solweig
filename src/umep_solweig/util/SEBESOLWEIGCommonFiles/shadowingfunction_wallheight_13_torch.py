@@ -6,7 +6,7 @@ import torch
 
 def shade_on_walls(azimuth, aspect, walls, dsm, f, device):
     # wall shadows wall parameterization
-    wallbol = (walls > 0).astype(float)
+    wallbol = (walls > 0).float()
 
     # Removing walls in shadow due to selfshadowing
     azilow = azimuth - torch.pi / 2
@@ -14,7 +14,7 @@ def shade_on_walls(azimuth, aspect, walls, dsm, f, device):
 
     if azilow >= 0 and azihigh < 2 * torch.pi:  # 90 to 270  (SHADOW)
         facesh = (
-            torch.logical_or(aspect < azilow, aspect >= azihigh).astype(float)
+            torch.logical_or(aspect < azilow, aspect >= azihigh).float()
             - wallbol
             + 1
         )
@@ -30,14 +30,14 @@ def shade_on_walls(azimuth, aspect, walls, dsm, f, device):
 
     sh = torch.clone(f - dsm)  # shadow volume
     facesun = torch.logical_and(
-        facesh + (walls > 0).astype(float) == 1, walls > 0
-    ).astype(float)
+        facesh + (walls > 0).float() == 1, walls > 0
+    ).float()
     wallsun = torch.clone(walls - sh)
     wallsun[wallsun < 0] = 0
     wallsun[facesh == 1] = 0
     wallsh = torch.clone(walls - wallsun)
 
-    sh = torch.logical_not(torch.logical_not(sh)).astype(float)
+    sh = torch.logical_not(torch.logical_not(sh)).float()
     sh = sh * -1 + 1
 
     if device.type == "cuda":
@@ -90,8 +90,8 @@ def shadowingfunction_wallheight_13(
 
     # conversion
     # degrees = torch.pi/180
-    azimuth = radians(azimuth)
-    altitude = radians(altitude)
+    azimuth = torch.tensor(radians(azimuth), device=device)
+    altitude = torch.tensor(radians(altitude), device=device)
 
     # measure the size of the image
     sizex = a.shape[0]
@@ -167,11 +167,11 @@ def shadowingfunction_wallheight_13(
         index = index + 1
 
     sh, wallsh, wallsun, facesh, facesun = shade_on_walls(
-        azimuth, aspect, walls, a, f
+        azimuth, aspect, walls, a, f, device
     )
     if walls_scheme is not False:
         sh_, wallsh_, wallsun_, facesh_, facesun_ = shade_on_walls(
-            azimuth, aspect_scheme, walls_scheme, a, f
+            azimuth, aspect_scheme, walls_scheme, a, f, device
         )
         shade_on_wall = wallsh_.copy()
 
