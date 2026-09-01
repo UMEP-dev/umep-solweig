@@ -36,13 +36,13 @@ def Solweig_2015a_metdata_noload(inputdata, location, UTC):
     leafoff1 = 300  # TODO this should change
 
     # initialize matrices
-    altitude = np.empty(shape=(1, data_len))
-    azimuth = np.empty(shape=(1, data_len))
-    zen = np.empty(shape=(1, data_len))
-    jday = np.empty(shape=(1, data_len))
-    YYYY = np.empty(shape=(1, data_len))
-    leafon = np.empty(shape=(1, data_len))
-    altmax = np.empty(shape=(1, data_len))
+    altitude = np.empty(shape=(1, data_len), dtype=np.float32)
+    azimuth = np.empty(shape=(1, data_len), dtype=np.float32)
+    zen = np.empty(shape=(1, data_len), dtype=np.float32)
+    jday = np.empty(shape=(1, data_len), dtype=np.float32)
+    YYYY = np.empty(shape=(1, data_len), dtype=np.float32)
+    leafon = np.empty(shape=(1, data_len), dtype=np.float32)
+    altmax = np.empty(shape=(1, data_len), dtype=np.float32)
 
     sunmax = dict()
 

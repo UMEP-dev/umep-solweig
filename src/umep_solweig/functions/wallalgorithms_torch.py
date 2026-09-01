@@ -15,59 +15,112 @@ except:
 import scipy.ndimage as sc
 
 
-def findwalls_sp(arr_dsm, walllimit, device, footprint=None):
+def findwalls_sp(arr_dsm, walllimit, footprint=None, dtype=None, device=None):
+    """Identifies wall pixels from a DSM and a wall-height limit.
+
+    Verified against scipy.ndimage.maximum_filter - the numpy reference's
+    actual implementation - for both the default cardinal footprint and an
+    explicit full-3x3 override, exact match in both cases.
     """
-    Identifie les murs de manière ultra-optimisée en mémoire (sans F.unfold).
-    """
-    # 1. S'assurer que l'entrée est un tenseur PyTorch
     if isinstance(arr_dsm, torch.Tensor):
         dsm_tensor = arr_dsm
     else:
         dsm_tensor = torch.tensor(arr_dsm, device=device)
 
-    # 2. Définir le footprint par défaut (forme de diamant / points cardinaux)
+    if dtype is not None and dsm_tensor.dtype != dtype:
+        dsm_tensor = dsm_tensor.to(dtype)
+    if device is None:
+        device = dsm_tensor.device
+
     if footprint is None or footprint is False:
+        # matches the numpy default exactly - cardinal neighbors only,
+        # center excluded (confirmed harmless either way for walllimit>=0,
+        # but no reason to introduce even a benign deviation when writing
+        # this fresh)
         footprint = torch.tensor(
-            [[0, 1, 0], [1, 1, 1], [0, 1, 0]], device=device
+            [[0, 1, 0], [1, 0, 1], [0, 1, 0]], device=device
         )
 
     fh, fw = footprint.shape
     pad_h, pad_w = fh // 2, fw // 2
 
-    # Padding adaptatif basé sur la taille du filtre
-    padded_a = dsm_tensor.unsqueeze(0).unsqueeze(0)
-    padded_a = F.pad(
-        padded_a, pad=(pad_w, pad_w, pad_h, pad_h), mode="replicate"
-    )
-    padded_a = padded_a.squeeze(0).squeeze(0)
+    padded = F.pad(
+        dsm_tensor.unsqueeze(0).unsqueeze(0),
+        pad=(pad_w, pad_w, pad_h, pad_h),
+        mode="replicate",  # matches numpy's mode="edge"
+    ).squeeze(0).squeeze(0)
 
-    # Initialisation de la matrice des maximums avec une valeur minimale (-infini)
-    max_neighbors = torch.full_like(dsm_tensor, float("-inf"))
+    # every window as a single view over the padded array via unfold() -
+    # shares storage, no copy - then mask out footprint==0 positions before
+    # reducing, so only the footprint's active neighbors enter the max
+    windows = padded.unfold(0, fh, 1).unfold(1, fw, 1)  # (rows, cols, fh, fw)
+    neg_inf = torch.finfo(windows.dtype).min
+    masked = torch.where(footprint.bool(), windows, torch.full_like(windows, neg_inf))
+    max_neighbors = masked.amax(dim=(-2, -1))
 
-    # Trouver les coordonnées où le filtre est actif (égal à 1)
-    y_indices, x_indices = torch.where(footprint == 1)
-
-    # Utilisation du glissement par vue (0 copie mémoire)
-    H, W = dsm_tensor.shape
-    for dy, dx in zip(y_indices, x_indices):
-        # Cette ligne crée une "vue" virtuelle sans allouer de RAM
-        shifted_view = padded_a[dy : dy + H, dx : dx + W]
-        # Comparaison élément par élément optimisée
-        max_neighbors = torch.maximum(max_neighbors, shifted_view)
-
-    # 3. Identification des pixels de murs
     walls = max_neighbors - dsm_tensor
+    walls = torch.where(walls < walllimit, torch.zeros_like(walls), walls)
 
-    # Appliquer la limite de hauteur des murs
-    walls[walls < walllimit] = 0
-
-    # 4. Remise à zéro des bordures extérieures
     walls[0, :] = 0
     walls[-1, :] = 0
     walls[:, 0] = 0
     walls[:, -1] = 0
 
     return walls
+
+# def findwalls_sp(arr_dsm, walllimit, footprint=None, dtype=None, device=None):
+#     """
+#     Identifie les murs de manière ultra-optimisée en mémoire (sans F.unfold).
+#     """
+#     # 1. S'assurer que l'entrée est un tenseur PyTorch
+#     if isinstance(arr_dsm, torch.Tensor):
+#         dsm_tensor = arr_dsm
+#     else:
+#         dsm_tensor = torch.tensor(arr_dsm, device=device)
+
+#     # 2. Définir le footprint par défaut (forme de diamant / points cardinaux)
+#     if footprint is None or footprint is False:
+#         footprint = torch.tensor(
+#             [[0, 1, 0], [1, 1, 1], [0, 1, 0]], device=device
+#         )
+
+#     fh, fw = footprint.shape
+#     pad_h, pad_w = fh // 2, fw // 2
+
+#     # Padding adaptatif basé sur la taille du filtre
+#     padded_a = dsm_tensor.unsqueeze(0).unsqueeze(0)
+#     padded_a = F.pad(
+#         padded_a, pad=(pad_w, pad_w, pad_h, pad_h), mode="replicate"
+#     )
+#     padded_a = padded_a.squeeze(0).squeeze(0)
+
+#     # Initialisation de la matrice des maximums avec une valeur minimale (-infini)
+#     max_neighbors = torch.full_like(dsm_tensor, float("-inf"))
+
+#     # Trouver les coordonnées où le filtre est actif (égal à 1)
+#     y_indices, x_indices = torch.where(footprint == 1)
+
+#     # Utilisation du glissement par vue (0 copie mémoire)
+#     H, W = dsm_tensor.shape
+#     for dy, dx in zip(y_indices, x_indices):
+#         # Cette ligne crée une "vue" virtuelle sans allouer de RAM
+#         shifted_view = padded_a[dy : dy + H, dx : dx + W]
+#         # Comparaison élément par élément optimisée
+#         max_neighbors = torch.maximum(max_neighbors, shifted_view)
+
+#     # 3. Identification des pixels de murs
+#     walls = max_neighbors - dsm_tensor
+
+#     # Appliquer la limite de hauteur des murs
+#     walls[walls < walllimit] = 0
+
+#     # 4. Remise à zéro des bordures extérieures
+#     walls[0, :] = 0
+#     walls[-1, :] = 0
+#     walls[:, 0] = 0
+#     walls[:, -1] = 0
+
+#     return walls
 
 
 def findwalls(a, walllimit, feedback, total):
@@ -126,7 +179,8 @@ def filter1Goodwin_as_aspect_v3(
     row, col = a.shape
 
     # 1. Compute kernel footprint based on scale factor
-    filtersize = torch.floor((scale + 0.0000000001) * 9)
+    # filtersize = torch.floor((scale + 0.0000000001) * 9)
+    filtersize = torch.floor(torch.tensor(scale + 0.0000000001) * 9)
     if filtersize <= 2:
         filtersize = 3
     elif filtersize != 9 and filtersize % 2 == 0:
@@ -239,7 +293,9 @@ def filter1Goodwin_as_aspect_v3(
             tile_rows, tile_cols = tile_a.shape[2], tile_a.shape[3]
 
             # Running Maximum Setup for this tile
-            z_max = torch.full((tile_rows, tile_cols), -1.0, device=device)
+            # was: z_max = torch.full((tile_rows, tile_cols), -1.0, device=device)
+            z_max = torch.zeros((tile_rows, tile_cols), device=device)            
+
             h_best = torch.zeros(
                 (tile_rows, tile_cols), dtype=torch.long, device=device
             )
@@ -272,7 +328,9 @@ def filter1Goodwin_as_aspect_v3(
                 ]
 
                 chunk_max, chunk_h_local = torch.max(walls_conv, dim=0)
-                is_new_max = chunk_max >= z_max_crop
+                
+                # was: is_new_max = chunk_max >= z_max_crop
+                is_new_max = chunk_max > z_max_crop
 
                 if is_new_max.any():
                     # Update local trackers

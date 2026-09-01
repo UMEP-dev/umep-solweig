@@ -420,6 +420,19 @@ def anisotropic_sky(
     # Sum of all Lside components (sky, vegetation, sunlit and shaded buildings, reflected)
     Ldown = Ldown_sky + Ldown_veg + Ldown_sh + Ldown_sun + Ldown_ref
 
+    if current_step == 72:
+        def _stats(name, x):
+            print(f"{name:10s} min={x.min().item(): .6f}  max={x.max().item(): .6f}  "
+                  f"mean={x.mean().item(): .6f}")
+        print("=== Ldown components (CPU, t=72) ===")
+        _stats("Ldown_sky", Ldown_sky)
+        _stats("Ldown_veg", Ldown_veg)
+        _stats("Ldown_sh", Ldown_sh)
+        _stats("Ldown_sun", Ldown_sun)
+        _stats("Ldown_ref", Ldown_ref)
+        _stats("Ldown", Ldown)
+        print(f"altitude (full precision): {solar_altitude!r}")
+
     ### Direct radiation ###
     if cyl == 1:  ### Kside with cylinder ###
         KsideI = shadow * radI * np.cos(solar_altitude * deg2rad)

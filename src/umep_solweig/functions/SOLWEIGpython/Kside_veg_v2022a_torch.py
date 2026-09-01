@@ -1,6 +1,8 @@
 from __future__ import absolute_import
 from .Kvikt_veg import Kvikt_veg
 
+from . import sunlit_shaded_patches_torch
+
 try:
     import torch
 
@@ -225,7 +227,7 @@ def Kside_veg_v2022a(
                 temp_vbsh = (1 - shmat[:, :, idx]) * vbshvegshmat[:, :, idx]
                 temp_sh = temp_vbsh == 1
 
-                sunlit_patches, shaded_patches = shaded_or_sunlit(
+                sunlit_patches, shaded_patches = sunlit_shaded_patches_torch.shaded_or_sunlit(
                     altitude,
                     azimuth,
                     patch_altitude[idx],
@@ -354,7 +356,7 @@ def Kside_veg_v2022a(
                 azimuth_difference = torch.abs(azimuth - patch_azimuth[idx])
 
                 if (azimuth_difference > 90) and (azimuth_difference < 270):
-                    sunlit_patches, shaded_patches = shaded_or_sunlit(
+                    sunlit_patches, shaded_patches = sunlit_shaded_patches_torch.shaded_or_sunlit(
                         altitude,
                         azimuth,
                         patch_altitude[idx],

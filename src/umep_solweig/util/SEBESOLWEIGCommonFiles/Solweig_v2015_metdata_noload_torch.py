@@ -52,6 +52,14 @@ def Solweig_2015a_metdata_noload(inputdata, location, UTC):
     leafon = torch.empty(size=(1, data_len), device=device)
     altmax = torch.empty(size=(1, data_len), device=device)
 
+    # altitude = torch.empty(size=(1, data_len), device=device, dtype=torch.float64)
+    # azimuth = torch.empty(size=(1, data_len), device=device, dtype=torch.float64)
+    # zen = torch.empty(size=(1, data_len), device=device, dtype=torch.float64)
+    # jday = torch.empty(size=(1, data_len), device=device, dtype=torch.float64)
+    # YYYY = torch.empty(size=(1, data_len), device=device, dtype=torch.float64)
+    # leafon = torch.empty(size=(1, data_len), device=device, dtype=torch.float64)
+    # altmax = torch.empty(size=(1, data_len), device=device, dtype=torch.float64)
+
     sunmax = dict()
 
     for i, row in enumerate(met[:, 0]):

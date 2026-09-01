@@ -340,11 +340,16 @@ def processAlgorithm(
             svfveg_array = torch.from_numpy(svfveg_array).to(device)
             svfaveg_array = torch.from_numpy(svfaveg_array).to(device)
 
-        voxel_y = None
+        # voxel_y = None
+        # if use_gpu:
+        #     voxel_y = torch.where(voxelTable[:, 2] != 0)
+        # else:
+        #     voxel_y = np.where(voxelTable[:, 2] != 0)
+
         if use_gpu:
-            voxel_y = torch.where(voxelTable[:, 2] != 0)
+            voxel_y = torch.where(voxelTable[:, 1] == svf_height)
         else:
-            voxel_y = np.where(voxelTable[:, 2] != 0)
+            voxel_y = np.where(voxelTable[:, 1] == svf_height)
 
         for temp_y in voxel_y[0]:
             svf_array[temp_y] = svftotal[
@@ -424,19 +429,19 @@ def processAlgorithm(
                 # Interpolate for voxels where SVF has not been calculated
                 voxelTable = svfv.interpolate_svf(voxelTable)
 
-        # Clean up k-means result tensors
-        if use_gpu:
-            del (
-                svf_array,
-                svfbu_array,
-                svfveg_array,
-                svfaveg_array,
-                svf_height_array,
-            )
-            if device.type == "cuda":
-                torch.cuda.empty_cache()
-            elif device.type == "xpu":
-                torch.xpu.empty_cache()
+            # Clean up k-means result tensors
+            if use_gpu:
+                del (
+                    svf_array,
+                    svfbu_array,
+                    svfveg_array,
+                    svfaveg_array,
+                    svf_height_array,
+                )
+                if device.type == "cuda":
+                    torch.cuda.empty_cache()
+                elif device.type == "xpu":
+                    torch.xpu.empty_cache()
 
         # Loop for exact SVF at heights (increase DEM)
         # if demlayer:

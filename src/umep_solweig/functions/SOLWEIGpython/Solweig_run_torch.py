@@ -28,7 +28,7 @@ from . import Solweig_2026a_calc_forprocessing_torch as so
 from . import PET_calculations as p
 from . import UTCI_calculations as utci
 from .CirclePlotBar import PolarBarPlot
-from .wall_surface_temperature import load_walls
+from .wall_surface_temperature_torch import load_walls, build_static_wall_tensors
 from .wallOfInterest import pointOfInterest
 from .patch_characteristics import hemispheric_image
 from .wallsAsNetCDF import walls_as_netcdf
@@ -191,7 +191,14 @@ def solweig_run(configPath, feedback):
         demforbuild = int(configDict["demforbuild"])
         if demforbuild == 1:
             gdal_dem = gdal.Open(configDict["filepath_dem"])
-            dem = gdal_dem.ReadAsArray().astype(float)
+            #dem = gdal_dem.ReadAsArray().astype(float)
+
+            dem = torch.from_numpy(
+                gdal_dem
+                .ReadAsArray()
+                .astype(float)
+            ).to(device)
+
             nd = gdal_dem.GetRasterBand(1).GetNoDataValue()
 
             # response to issue and #230
@@ -513,11 +520,16 @@ def solweig_run(configPath, feedback):
         # Import shadow matrices (Anisotropic sky)
         anisotropic_sky = int(configDict["aniso"])
         if anisotropic_sky == 1:  # UseAniso
-            data = torch.load(
-                configDict["input_aniso"],
-                map_location=device,
-                weights_only=True,
-            )
+            # data = torch.load(
+            #     configDict["input_aniso"],
+            #     map_location=device,
+            #     weights_only=True,
+            # )
+            npz = np.load(configDict["input_aniso"])
+            data = {
+                key: torch.from_numpy(npz[key]).to(device)
+                for key in npz.files
+            }            
             shmat = data["shadowmat"]
             vegshmat = data["vegshadowmat"]
             vbshvegshmat = data["vbshmat"]
@@ -627,6 +639,16 @@ def solweig_run(configPath, feedback):
                     lcgrid.clone(), param, DOY[0], Ta, location, device
                 )
         else:
+            Tg = 0
+            Rn = 0
+            Rn_past = 0
+            G = 0
+            Tm = 0
+            cap_grid = 0
+            diff_grid = 0
+            a1_grid = 0
+            a2_grid = 0
+            a3_grid = 0
             pass
 
         # Replace the ground view factors with integration of solid angles
@@ -636,26 +658,23 @@ def solweig_run(configPath, feedback):
         wallScheme = int(configDict["wallscheme"])
         if wallScheme == 1:
             wallData = np.load(configDict["input_wall"])
-            voxelMaps = wallData["voxelId"]
+            # voxelId becomes a tensor since it's consumed by ani_sky (a torch
+            # function) later in the pipeline. voxelTable stays plain numpy on
+            # purpose - load_walls() already handles either a numpy array or a
+            # tensor as its voxelTable argument and converts internally if needed,
+            # so there's nothing to change on that line.
+            voxelMaps = torch.from_numpy(wallData["voxelId"]).to(device)
             voxelTable = wallData["voxelTable"]
-            # Get wall type from standalone
-            wall_type_standalone = {
-                "Brick": "100",
-                "Brick_wall": "100",
-                "Concrete_wall": "101",
-                "Concrete": "101",
-                "Wood_wall": "102",
-                "Wood": "102",
-            }
-            wall_type = wall_type_standalone[configDict["walltype"]]
 
-            # Calculate wall height for wall scheme, i.e. include corners (thicker walls)
+            wall_type = str(configDict["walltype"])
+
             walls_scheme = wa.findwalls_sp(
                 dsm,
                 2,
-                torch.tensor([[1, 1, 1], [1, 0, 1], [1, 1, 1]], device=device),
+                footprint=torch.tensor([[1, 1, 1], [1, 0, 1], [1, 1, 1]], device=device),
+                dtype=dsm.dtype,
+                device=device
             )
-            # Calculate wall aspect for wall scheme, i.e. include corners (thicker walls)
             dirwalls_scheme = wa.filter1Goodwin_as_aspect_v3(
                 walls_scheme.clone(),
                 scale,
@@ -665,29 +684,36 @@ def solweig_run(configPath, feedback):
                 device,
             )
 
-            # Used in wall temperature parameterization scheme
+            # YYYY/DOY/hours/minu are per-timestep tensors - pandas has no concept
+            # of a torch tensor, so every value handed to pd.to_datetime/
+            # pd.to_timedelta needs to be a plain Python number first. Reusing the
+            # same unwrap helper pattern from sunonsurface_2018a_torch.py and
+            # wall_surface_temperature - worth promoting to one shared util at this
+            # point rather than redefining it a fourth time somewhere else later.
+            def _s(x):
+                return x.item() if torch.is_tensor(x) else x
+
             first_timestep = (
-                pd.to_datetime(YYYY[0][0], format="%Y")
-                + pd.to_timedelta(DOY[0] - 1, unit="d")
-                + pd.to_timedelta(hours[0], unit="h")
-                + pd.to_timedelta(minu[0], unit="m")
+                pd.to_datetime(int(_s(YYYY[0][0])), format="%Y")
+                + pd.to_timedelta(int(_s(DOY[0])) - 1, unit="d")
+                + pd.to_timedelta(_s(hours[0]), unit="h")
+                + pd.to_timedelta(_s(minu[0]), unit="m")
             )
             second_timestep = (
-                pd.to_datetime(YYYY[0][1], format="%Y")
-                + pd.to_timedelta(DOY[1] - 1, unit="d")
-                + pd.to_timedelta(hours[1], unit="h")
-                + pd.to_timedelta(minu[1], unit="m")
+                pd.to_datetime(int(_s(YYYY[0][1])), format="%Y")
+                + pd.to_timedelta(int(_s(DOY[1])) - 1, unit="d")
+                + pd.to_timedelta(_s(hours[1]), unit="h")
+                + pd.to_timedelta(_s(minu[1]), unit="m")
             )
 
             timeStep = (second_timestep - first_timestep).seconds
 
-            # Load voxelTable as Pandas DataFrame
             voxelTable, dirwalls_scheme = load_walls(
                 voxelTable,
                 param,
                 wall_type,
                 dirwalls_scheme,
-                Ta[0],
+                _s(Ta[0]),
                 timeStep,
                 albedo_b,
                 ewall,
@@ -697,24 +723,30 @@ def solweig_run(configPath, feedback):
                 dsm,
             )
 
-            # Use wall of interest
+            static = build_static_wall_tensors(voxelTable, device)        
+
             woi_file = configDict["woi_file"]
             if woi_file:
-                # (dsm_minx, dsm_x_size, dsm_x_rotation, dsm_miny, dsm_y_rotation, dsm_y_size) = gdal_dsm.GetGeoTransform() #TODO: fix for standalone
-                woi_field = configDict[
-                    "woi_field"
-                ]  # self.parameterAsStrings(parameters, self.WOI_FIELD, context)
+                woi_field = configDict["woi_field"]
                 woisxy, woiname = pointOfInterest(
                     configDict["woi_file"], woi_field, scale, gdal_dsm
                 )
 
-            # Create pandas datetime object to be used when createing an xarray DataSet where wall temperatures/radiation is stored and eventually saved as a NetCDf
             if configDict["wallnetcdf"] == 1:
+                # This builds a datetime array from the WHOLE series at once, not a
+                # single timestep - .cpu().numpy() rather than .item(), since
+                # to_datetime/to_timedelta need something numpy-array-like here,
+                # not a single scalar
+                YYYY_np = YYYY[0].cpu().numpy() if torch.is_tensor(YYYY) else YYYY[0]
+                DOY_np = DOY.cpu().numpy() if torch.is_tensor(DOY) else DOY
+                hours_np = hours.cpu().numpy() if torch.is_tensor(hours) else hours
+                minu_np = minu.cpu().numpy() if torch.is_tensor(minu) else minu
+
                 met_for_xarray = (
-                    pd.to_datetime(YYYY[0][:], format="%Y")
-                    + pd.to_timedelta(DOY - 1, unit="d")
-                    + pd.to_timedelta(hours, unit="h")
-                    + pd.to_timedelta(minu, unit="m")
+                    pd.to_datetime(YYYY_np, format="%Y")
+                    + pd.to_timedelta(DOY_np - 1, unit="d")
+                    + pd.to_timedelta(hours_np, unit="h")
+                    + pd.to_timedelta(minu_np, unit="m")
                 )
         else:
             wallScheme = 0
@@ -962,6 +994,7 @@ def solweig_run(configPath, feedback):
                 a2_grid,
                 a3_grid,
                 shadow,
+                static,
             )
 
             # Save I0 for I0 vs. Kdown output plot to check if UTC is off

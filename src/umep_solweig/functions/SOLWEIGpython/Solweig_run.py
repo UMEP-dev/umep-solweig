@@ -525,6 +525,16 @@ def solweig_run(configPath, feedback):
                 lcgrid.copy(), param, DOY[0], Ta, location
             )
     else:
+        Tg = 0
+        Rn = 0
+        Rn_past = 0
+        G = 0
+        Tm = 0
+        cap_grid = 0
+        diff_grid = 0
+        a1_grid = 0
+        a2_grid = 0
+        a3_grid = 0        
         pass
 
     # Replace the ground view factors with integration of solid angles
@@ -536,16 +546,8 @@ def solweig_run(configPath, feedback):
         wallData = np.load(configDict["input_wall"])
         voxelMaps = wallData["voxelId"]
         voxelTable = wallData["voxelTable"]
-        # Get wall type from standalone
-        wall_type_standalone = {
-            "Brick": "100",
-            "Brick_wall": "100",
-            "Concrete_wall": "101",
-            "Concrete": "101",
-            "Wood_wall": "102",
-            "Wood": "102",
-        }
-        wall_type = wall_type_standalone[configDict["walltype"]]
+
+        wall_type = str(configDict["walltype"])
 
         # Calculate wall height for wall scheme, i.e. include corners (thicker walls)
         walls_scheme = wa.findwalls_sp(

@@ -253,8 +253,8 @@ def svfForProcessing153(
             )
         else:
             voxelTable = 0
-            allbuildIDSeen = 0
-            allvoxelHeight = 0
+            # allbuildIDSeen = 0
+            # allvoxelHeight = 0
             all_voxelId = 0
             walls = 0
 

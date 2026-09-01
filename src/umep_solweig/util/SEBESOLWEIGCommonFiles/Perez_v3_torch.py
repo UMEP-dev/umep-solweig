@@ -203,11 +203,17 @@ def Perez_v3(
         device=device,
     )
 
-    acoeff = torch.transpose(torch.atleast_2d([m_a1, m_a2, m_a3, m_a4]))
-    bcoeff = torch.transpose(torch.atleast_2d([m_b1, m_b2, m_b3, m_b4]))
-    ccoeff = torch.transpose(torch.atleast_2d([m_c1, m_c2, m_c3, m_c4]))
-    dcoeff = torch.transpose(torch.atleast_2d([m_d1, m_d2, m_d3, m_d4]))
-    ecoeff = torch.transpose(torch.atleast_2d([m_e1, m_e2, m_e3, m_e4]))
+    # acoeff = torch.transpose(torch.atleast_2d([m_a1, m_a2, m_a3, m_a4]))
+    # bcoeff = torch.transpose(torch.atleast_2d([m_b1, m_b2, m_b3, m_b4]))
+    # ccoeff = torch.transpose(torch.atleast_2d([m_c1, m_c2, m_c3, m_c4]))
+    # dcoeff = torch.transpose(torch.atleast_2d([m_d1, m_d2, m_d3, m_d4]))
+    # ecoeff = torch.transpose(torch.atleast_2d([m_e1, m_e2, m_e3, m_e4]))
+
+    acoeff = torch.stack([m_a1, m_a2, m_a3, m_a4], dim=1)
+    bcoeff = torch.stack([m_b1, m_b2, m_b3, m_b4], dim=1)
+    ccoeff = torch.stack([m_c1, m_c2, m_c3, m_c4], dim=1)
+    dcoeff = torch.stack([m_d1, m_d2, m_d3, m_d4], dim=1)
+    ecoeff = torch.stack([m_e1, m_e2, m_e3, m_e4], dim=1)
 
     deg2rad = torch.pi / 180
     rad2deg = 180 / torch.pi
@@ -219,8 +225,8 @@ def Perez_v3(
     Ibn = radI
 
     # Skyclearness
-    PerezClearness = ((Idh + Ibn) / (Idh + 1.041 * torch.power(zen, 3))) / (
-        1 + 1.041 * torch.power(zen, 3)
+    PerezClearness = ((Idh + Ibn) / (Idh + 1.041 * torch.pow(zen, 3))) / (
+        1 + 1.041 * torch.pow(zen, 3)
     )
     # Extra terrestrial radiation
     day_angle = jday * 2 * torch.pi / 365
@@ -238,11 +244,11 @@ def Perez_v3(
     if altitude >= 10 * deg2rad:
         AirMass = 1 / torch.sin(altitude)
     elif altitude < 0:  # below equation becomes complex
-        AirMass = 1 / torch.sin(altitude) + 0.50572 * torch.power(
+        AirMass = 1 / torch.sin(altitude) + 0.50572 * torch.pow(
             180 * complex(altitude) / torch.pi + 6.07995, -1.6364
         )
     else:
-        AirMass = 1 / torch.sin(altitude) + 0.50572 * torch.power(
+        AirMass = 1 / torch.sin(altitude) + 0.50572 * torch.pow(
             180 * altitude / torch.pi + 6.07995, -1.6364
         )
 
@@ -305,7 +311,7 @@ def Perez_v3(
         # different equations for c & d in clearness bin no. 1,  from Robinsson
         m_c = (
             torch.exp(
-                torch.power(
+                torch.pow(
                     PerezBrightness
                     * (
                         ccoeff[intClearness, 0] + ccoeff[intClearness, 1] * zen
@@ -361,8 +367,8 @@ def Perez_v3(
     lv = lv / torch.sum(lv)
 
     if patchchoice == 1:
-        x = torch.transpose(torch.atleast_2d(skyvaultalt * rad2deg))
-        y = torch.transpose(torch.atleast_2d(skyvaultazi * rad2deg))
-        z = torch.transpose(torch.atleast_2d(lv))
-        lv = torch.append(torch.append(x, y, axis=1), z, axis=1)
+        x = torch.transpose(torch.atleast_2d(skyvaultalt * rad2deg), 0, 1)
+        y = torch.transpose(torch.atleast_2d(skyvaultazi * rad2deg), 0, 1)
+        z = torch.transpose(torch.atleast_2d(lv), 0, 1)
+        lv = torch.cat([x, y, z], dim=1)
     return lv, PerezClearness, PerezBrightness

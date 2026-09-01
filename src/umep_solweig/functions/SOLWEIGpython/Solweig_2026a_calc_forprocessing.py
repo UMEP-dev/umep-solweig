@@ -31,6 +31,9 @@ from .anisotropic_sky import anisotropic_sky as ani_sky
 from .patch_radiation import patch_steradians
 from copy import deepcopy
 
+# Wall surface temperature scheme
+from .wall_surface_temperature import wall_surface_temperature
+
 # Ground surface temperature
 from .ground_surface import (
     surfaceTemperature_calc,
@@ -399,10 +402,10 @@ def Solweig_2026a_calc(
             Tgdiff = Tgdiff * CI_TgG  # new estimation
 
             # For Tg output in POIs
-            TgTemp = Tgdiff * shadow + Ta
-            _, timeadd, Tg = TsWaveDelay_2015a(
-                TgTemp, firstdaytime, timeadd, timestepdec, Tg
-            )  # timeadd only here v2021a
+            # TgTemp = Tgdiff * shadow + Ta
+            # _, timeadd, Tg = TsWaveDelay_2015a(
+            #     TgTemp, firstdaytime, timeadd, timestepdec, Tg
+            # )  # timeadd only here v2021a
 
             if landcover == 1:
                 Tg[Tg < 0] = (
@@ -478,7 +481,7 @@ def Solweig_2026a_calc(
                 first,
                 second,
                 dirwalls,
-                Tg,
+                Tgdiff,
                 Tgwall,
                 Ta,
                 emis_grid,
@@ -510,6 +513,12 @@ def Solweig_2026a_calc(
             LupN, timeaddnotused, Tgmap1N = TsWaveDelay_2015a(
                 gvfLupN, firstdaytime, timeadd, timestepdec, Tgmap1N
             )
+
+            # For Tg output in POIs
+            TgTemp = Tgdiff * shadow + Ta
+            _, timeadd, Tg = TsWaveDelay_2015a(
+                TgTemp, firstdaytime, timeadd, timestepdec, Tgdiff
+            )  # timeadd only here v2021a
 
         # # # # Kup # # # #
         Kup, KupE, KupS, KupW, KupN = Kup_veg_2015a(
@@ -764,7 +773,14 @@ def Solweig_2026a_calc(
     Lsouth += Lsouth_
     Lwest += Lwest_
     Lnorth += Lnorth_
-    Lside = (Lsouth + Lnorth + Least + Lwest) / 4
+    # Lside = (Lsouth + Lnorth + Least + Lwest) / 4
+
+    # New parameterization scheme for wall temperatures
+    if wallScheme == 1:
+        # albedo_g = 0.15 #TODO Change to correct
+        if altitude < 0:
+            wallsh_ = 0
+        voxelTable = wall_surface_temperature(voxelTable, wallsh_, altitude, azimuth, timeStep, radI, radD, radG, Ldown, Lup, Ta, esky, debug=(i == 72))
 
     ### Anisotropic sky
     if anisotropic_sky == 1:
@@ -805,7 +821,7 @@ def Solweig_2026a_calc(
 
         (
             Ldown,
-            Lside_,
+            Lside,
             Lside_sky,
             Lside_veg,
             Lside_sh,
@@ -815,10 +831,10 @@ def Solweig_2026a_calc(
             Lwest_,
             Lnorth_,
             Lsouth_,
-            Keast,
-            Ksouth,
-            Kwest,
-            Knorth,
+            Keast_,
+            Ksouth_,
+            Kwest_,
+            Knorth_,
             KsideI,
             KsideD,
             Kside,
@@ -856,7 +872,7 @@ def Solweig_2026a_calc(
             KupN,
             i,
         )
-        Lside += Lside_
+        #Lside += Lside_
     else:
         Lside_ = np.zeros((rows, cols))
         L_patches = None
@@ -884,7 +900,7 @@ def Solweig_2026a_calc(
         Sstr = absK * (
             Kside * Fcyl
             + (Kdown + Kup) * Fup
-            + (Knorth + Keast + Ksouth + Kwest) * Fside
+            + (Knorth_ + Keast_ + Ksouth_ + Kwest_) * Fside
         ) + absL * (
             (Ldown + Lup) * Fup
             + Lside * Fcyl

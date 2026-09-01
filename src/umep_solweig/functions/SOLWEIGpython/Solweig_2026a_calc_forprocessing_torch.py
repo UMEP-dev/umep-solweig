@@ -16,9 +16,9 @@ from ...util.SEBESOLWEIGCommonFiles.shadowingfunction_wallheight_13_torch import
 from ...util.SEBESOLWEIGCommonFiles.shadowingfunction_wallheight_23_torch import (
     shadowingfunction_wallheight_23,
 )
-from .gvf_2018a import gvf_2018a
+from .gvf_2018a_torch import gvf_2018a
 from .cylindric_wedge_torch import cylindric_wedge
-from .TsWaveDelay_2015a import TsWaveDelay_2015a
+from .TsWaveDelay_2015a_torch import TsWaveDelay_2015a
 from .Kup_veg_2015a_torch import Kup_veg_2015a
 
 
@@ -28,8 +28,12 @@ from ...util.SEBESOLWEIGCommonFiles.create_patches_torch import create_patches
 
 # Anisotropic longwave
 from .Lside_veg_torch import Lside_veg_v2022a, Lside_veg_v2026
-from .anisotropic_sky import anisotropic_sky as ani_sky
-from .patch_radiation import patch_steradians
+from .anisotropic_sky_torch import anisotropic_sky as ani_sky
+from .patch_radiation_torch import patch_steradians
+
+# Wall surface temperature scheme
+from .wall_surface_temperature_torch import wall_surface_temperature
+
 from copy import deepcopy
 
 try:
@@ -43,7 +47,6 @@ from .ground_surface_torch import (
     surfaceTemperature_calc,
     outgoingLongwave_calc,
 )
-
 
 def Solweig_2026a_calc(
     i,
@@ -150,6 +153,7 @@ def Solweig_2026a_calc(
     a2_grid,
     a3_grid,
     shadow_past,
+    static,
 ):
     """
     This is the core function of the SOLWEIG model
@@ -309,8 +313,8 @@ def Solweig_2026a_calc(
                     dsm,
                     vegdem,
                     vegdem2,
-                    azimuth,
-                    altitude,
+                    azimuth.clone(),
+                    altitude.clone(),
                     scale,
                     amaxvalue,
                     bush,
@@ -322,13 +326,13 @@ def Solweig_2026a_calc(
                 )
             )
             shadow = sh - (1 - vegsh) * (1 - psi)
-            del sh, vegsh, wallsh, wallshve, facesun, wallsh_
+            #del sh, vegsh, wallsh, wallshve, facesun, wallsh_
         else:
             sh, wallsh, wallsun, facesh, facesun, wallsh_ = (
                 shadowingfunction_wallheight_13(
                     dsm,
-                    azimuth,
-                    altitude,
+                    azimuth.clone(),
+                    altitude.clone(),
                     scale,
                     walls,
                     dirwalls * torch.pi / 180.0,
@@ -338,7 +342,7 @@ def Solweig_2026a_calc(
                 )
             )
             shadow = sh
-            del sh, wallsh, facesun, wallsh_
+            #del sh, wallsh, facesun, wallsh_
 
         # Building height angle from svf
         F_sh = cylindric_wedge(
@@ -438,17 +442,18 @@ def Solweig_2026a_calc(
 
             Tgdiff = Tgdiff * CI_TgG  # new estimation
 
-            # For Tg output in POIs
-            TgTemp = Tgdiff * shadow + Ta
-            _, timeadd, Tg = TsWaveDelay_2015a(
-                TgTemp, firstdaytime, timeadd, timestepdec, Tg
-            )  # timeadd only here v2021a
-            del TgTemp, Tgdiff
+            # # For Tg output in POIs
+            # TgTemp = Tgdiff * shadow + Ta
+            # _, timeadd, Tg = TsWaveDelay_2015a(
+            #     TgTemp.clone(), firstdaytime, timeadd, timestepdec, Tgdiff.clone()
+            # )  # timeadd only here v2021a
 
             if landcover == 1:
-                Tg[Tg < 0] = (
+                Tgdiff[Tgdiff < 0] = (
                     0  # temporary for removing low Tg during morning 20130205
                 )
+
+            #del TgTemp, Tgdiff
 
         # Calculate the outgoing longwave radiation
         if outgoingLW == 1:
@@ -492,67 +497,37 @@ def Solweig_2026a_calc(
 
         else:
             ### Ground View Factors
-            (
-                gvfLup,
-                gvfalb,
-                gvfalbnosh,
-                gvfLupE,
-                gvfalbE,
-                gvfalbnoshE,
-                gvfLupS,
-                gvfalbS,
-                gvfalbnoshS,
-                gvfLupW,
-                gvfalbW,
-                gvfalbnoshW,
-                gvfLupN,
-                gvfalbN,
-                gvfalbnoshN,
-                gvfSum,
-                gvfNorm,
-            ) = gvf_2018a(
-                wallsun,
-                walls,
-                buildings,
-                scale,
-                shadow,
-                first,
-                second,
-                dirwalls,
-                Tg,
-                Tgwall,
-                Ta,
-                emis_grid,
-                ewall,
-                alb_grid,
-                SBC,
-                albedo_b,
-                rows,
-                cols,
-                Twater,
-                lc_grid,
-                landcover,
+            gvfLup, gvfalb, gvfalbnosh, gvfLupE, gvfalbE, gvfalbnoshE, gvfLupS, gvfalbS, gvfalbnoshS, \
+            gvfLupW, gvfalbW, gvfalbnoshW, gvfLupN, gvfalbN, gvfalbnoshN, gvfSum, gvfNorm = gvf_2018a(
+                wallsun, walls, buildings, scale, shadow, first, second, dirwalls, Tgdiff, Tgwall, Ta,
+                emis_grid, ewall, alb_grid, SBC, albedo_b, rows, cols, Twater, lc_grid, landcover,   # <-- add this
             )
 
             # # # # Lup, daytime # # # #
             # Surface temperature wave delay - new as from 2014a
             Lup, timeaddnotused, Tgmap1 = TsWaveDelay_2015a(
-                gvfLup, firstdaytime, timeadd, timestepdec, Tgmap1
+                gvfLup.clone(), firstdaytime, timeadd, timestepdec, Tgmap1.clone()
             )
             LupE, timeaddnotused, Tgmap1E = TsWaveDelay_2015a(
-                gvfLupE, firstdaytime, timeadd, timestepdec, Tgmap1E
+                gvfLupE.clone(), firstdaytime, timeadd, timestepdec, Tgmap1E.clone()
             )
             LupS, timeaddnotused, Tgmap1S = TsWaveDelay_2015a(
-                gvfLupS, firstdaytime, timeadd, timestepdec, Tgmap1S
+                gvfLupS.clone(), firstdaytime, timeadd, timestepdec, Tgmap1S.clone()
             )
             LupW, timeaddnotused, Tgmap1W = TsWaveDelay_2015a(
-                gvfLupW, firstdaytime, timeadd, timestepdec, Tgmap1W
+                gvfLupW.clone(), firstdaytime, timeadd, timestepdec, Tgmap1W.clone()
             )
             LupN, timeaddnotused, Tgmap1N = TsWaveDelay_2015a(
-                gvfLupN, firstdaytime, timeadd, timestepdec, Tgmap1N
+                gvfLupN.clone(), firstdaytime, timeadd, timestepdec, Tgmap1N.clone()
             )
 
-        # # # # Kup # # # #
+            # For Tg output in POIs
+            TgTemp = Tgdiff * shadow + Ta
+            _, timeadd, Tg = TsWaveDelay_2015a(
+                TgTemp.clone(), firstdaytime, timeadd, timestepdec, Tgdiff.clone()
+            )  # timeadd only here v2021a
+
+        # # # # Kup # # # #       
         Kup, KupE, KupS, KupW, KupN = Kup_veg_2015a(
             radI,
             radD,
@@ -803,7 +778,30 @@ def Solweig_2026a_calc(
     Lsouth += Lsouth_
     Lwest += Lwest_
     Lnorth += Lnorth_
-    Lside = (Lsouth + Lnorth + Least + Lwest) / 4
+    #Lside = (Lsouth + Lnorth + Least + Lwest) / 4
+
+    # New parameterization scheme for wall temperatures
+    if wallScheme == 1:
+        # albedo_g = 0.15 #TODO Change to correct
+        if altitude < 0:
+            wallsh_ = 0.0
+        voxelTable = wall_surface_temperature(
+            voxelTable,
+            static,
+            wallsh_,
+            altitude,
+            azimuth,
+            timeStep,
+            radI,
+            radD,
+            radG,
+            Ldown,
+            Lup,
+            Ta,
+            esky,
+            device,   # <-- extra arg vs. the numpy call - the torch version takes device
+            debug=(i == 72),
+        )
 
     ### Anisotropic sky
     if anisotropic_sky == 1:
@@ -817,13 +815,12 @@ def Solweig_2026a_calc(
                 skyvaultalt.shape[0], device=device
             )
 
-            x = torch.transpose(torch.atleast_2d(skyvaultalt), device=device)
-            y = torch.transpose(torch.atleast_2d(skyvaultazi), device=device)
-            z = torch.transpose(
-                torch.atleast_2d(patch_emissivities), device=device
-            )
+            x = torch.transpose(torch.atleast_2d(skyvaultalt), 0, 1)
+            y = torch.transpose(torch.atleast_2d(skyvaultazi), 0, 1)
+            z = torch.transpose(torch.atleast_2d(patch_emissivities), 0, 1)
 
-            L_patches = torch.append(torch.append(x, y, axis=1), z, axis=1)
+            L_patches = torch.cat([x, y, z], dim=1)
+            
             del skyvaultalt, skyvaultazi, patch_emissivities, x, y, z
 
         else:
@@ -850,7 +847,7 @@ def Solweig_2026a_calc(
 
         (
             Ldown,
-            Lside_,
+            Lside,
             Lside_sky,
             Lside_veg,
             Lside_sh,
@@ -860,10 +857,10 @@ def Solweig_2026a_calc(
             Lwest_,
             Lnorth_,
             Lsouth_,
-            Keast,
-            Ksouth,
-            Kwest,
-            Knorth,
+            Keast_,
+            Ksouth_,
+            Kwest_,
+            Knorth_,
             KsideI,
             KsideD,
             Kside,
@@ -900,8 +897,9 @@ def Solweig_2026a_calc(
             KupW,
             KupN,
             i,
+            device
         )
-        Lside += Lside_
+        #Lside += Lside_
     else:
         Lside_ = torch.zeros((rows, cols), device=device)
         L_patches = None
@@ -929,7 +927,7 @@ def Solweig_2026a_calc(
         Sstr = absK * (
             Kside * Fcyl
             + (Kdown + Kup) * Fup
-            + (Knorth + Keast + Ksouth + Kwest) * Fside
+            + (Knorth_ + Keast_ + Ksouth_ + Kwest_) * Fside
         ) + absL * (
             (Ldown + Lup) * Fup
             + Lside * Fcyl

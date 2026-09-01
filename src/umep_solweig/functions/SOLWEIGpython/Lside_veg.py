@@ -87,8 +87,8 @@ def Lside_veg_v2022a(
 
     # Longwave from ground (see Lcyl_v2022a for remaining fluxes)
     if anisotropic_longwave == 1:
-        Lground = LupE * 0.5
-        Least = Lground
+        Least = LupE * 0.5
+        # Least = Lground
     else:
         Lsky = ((svfE + svfEveg - 1) * Lsky_allsky) * viktsky * 0.5
         Lveg = SBC * ewall * ((Ta + 273.15) ** 4) * viktveg * 0.5
@@ -130,8 +130,8 @@ def Lside_veg_v2022a(
 
     # Longwave from ground (see Lcyl_v2022a for remaining fluxes)
     if anisotropic_longwave == 1:
-        Lground = LupS * 0.5
-        Lsouth = Lground
+        Lsouth = LupS * 0.5
+        # Lsouth = Lground
     else:
         Lsky = ((svfS + svfSveg - 1) * Lsky_allsky) * viktsky * 0.5
         Lveg = SBC * ewall * ((Ta + 273.15) ** 4) * viktveg * 0.5
@@ -173,8 +173,8 @@ def Lside_veg_v2022a(
 
     # Longwave from ground (see Lcyl_v2022a for remaining fluxes)
     if anisotropic_longwave == 1:
-        Lground = LupW * 0.5
-        Lwest = Lground
+        Lwest = LupW * 0.5
+        # Lwest = Lground
     else:
         Lsky = ((svfW + svfWveg - 1) * Lsky_allsky) * viktsky * 0.5
         Lveg = SBC * ewall * ((Ta + 273.15) ** 4) * viktveg * 0.5
@@ -216,8 +216,8 @@ def Lside_veg_v2022a(
 
     # Longwave from ground (see Lcyl_v2022a for remaining fluxes)
     if anisotropic_longwave == 1:
-        Lground = LupN * 0.5
-        Lnorth = Lground
+        Lnorth = LupN * 0.5
+        # Lnorth = Lground
     else:
         Lsky = ((svfN + svfNveg - 1) * Lsky_allsky) * viktsky * 0.5
         Lveg = SBC * ewall * ((Ta + 273.15) ** 4) * viktveg * 0.5

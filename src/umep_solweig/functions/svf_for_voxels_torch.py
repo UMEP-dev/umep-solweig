@@ -27,8 +27,9 @@ def wallscheme_prepare(
     walls = wa.findwalls_sp(
         dsm,
         2,
-        device,
-        torch.tensor([[1, 1, 1], [1, 0, 1], [1, 1, 1]], device=dsm.device),
+        footprint=torch.tensor([[1, 1, 1], [1, 0, 1], [1, 1, 1]], device=device),
+        dtype=dsm.dtype,
+        device=device
     )
     walls_copy = torch.clone(walls)
     aspect = wa.filter1Goodwin_as_aspect_v3(

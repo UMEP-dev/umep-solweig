@@ -15,8 +15,11 @@ def create_patches(patch_option, device):
     # patch_option = 3 = 306 patches -> test
     # patch_option = 4 = 612 patches -> test
 
-    skyvaultalt = torch.atleast_2d([])
-    skyvaultazi = torch.atleast_2d([])
+    # skyvaultalt = torch.atleast_2d([])
+    # skyvaultazi = torch.atleast_2d([])
+
+    skyvaultalt = ()
+    skyvaultazi = ()
 
     # Creating skyvault of patches of constant radians (Tregeneza and Sharples, 1993)
     # Patch option 1, 145 patches, Original Robinson & Stone (2004) after Tregenza (1987)/Tregenza & Sharples (1993)
@@ -104,6 +107,9 @@ def create_patches(patch_option, device):
         for k in range(0, patches_in_band[j]):
             skyvaultalt = skyvaultalt + (skyvaultaltint[j],)
             skyvaultazi = skyvaultazi + (k * skyvaultaziint[j] + azistart[j],)
+
+    skyvaultalt = torch.stack(skyvaultalt).to(device)
+    skyvaultazi = torch.stack(skyvaultazi).to(device)
 
     del deg2rad
     if device.type == "cuda":

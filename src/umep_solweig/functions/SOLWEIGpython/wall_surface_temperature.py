@@ -77,7 +77,7 @@ def load_walls(
         "voxelHeightMasl",
     ]
     for col in columns_to_add:
-        voxelTable[col] = 0
+        voxelTable[col] = 0.0
 
     # tmp = svf + svfveg - 1.
     # tmp[tmp < 0.] = 0.
@@ -314,6 +314,7 @@ def wall_surface_temperature(
     Lup,
     Ta,
     esky,
+    debug=False,
 ):
     """Wall surface temperature parameterization
 
@@ -329,12 +330,12 @@ def wall_surface_temperature(
 
     # Estimate shadow on wall, i.e. how far up the wall that the shade stretches (or how far down the wall that the sun reaches)
     voxelTable["wallShade"] = (
-        0  # Starting value is zero, i.e. the entire wall is shaded
+        0.0  # Starting value is zero, i.e. the entire wall is shaded
     )
     # If sun is above horizon, get wall shadow height on wall from wallsh calculated in shadowingfunction_wallheight_23/13 in Solweig_2022a_calc_forprocessing.py
     if altitude > 0:
         # Starting value of wallShadeHeight
-        voxelTable["wallShadeHeight"] = 0
+        voxelTable["wallShadeHeight"] = 0.0
         # Find number of unique walls in model domain
         unique_walls = np.unique(voxelTable["wallId"])
         # Find wall shade height of each unique wall
@@ -363,6 +364,9 @@ def wall_surface_temperature(
     # If sun is below horizon, everything is in "shade"
     else:
         voxelTable["wallShadeHeight"] = voxelTable["wallHeight_exact"]
+
+    if debug:   # <-- add this block
+            print(f"CPU sunlit voxel count: {(voxelTable['wallShade'] == 1).sum()} / {voxelTable.shape[0]}")
 
     # Ldown and Lup for wall pixels used when estimating the amount of longwave received from surrounding surfaces (ground and reflected)
     Ldown_array = np.zeros((voxelTable.shape[0]))

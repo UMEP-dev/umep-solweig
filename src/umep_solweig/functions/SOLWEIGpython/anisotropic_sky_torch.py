@@ -18,7 +18,7 @@ from . import patch_radiation_torch as patch_radiation
 
 from . import sunlit_shaded_patches_torch as sunlit_shaded_patches
 
-from . import patch_radiation_torch as patch_radiation
+#from . import patch_radiation_torch as patch_radiation
 
 
 def anisotropic_sky(
@@ -61,8 +61,7 @@ def anisotropic_sky(
     SBC = 5.67051e-8
 
     # Degrees to radians
-
-    deg2rad = (torch.pi / 180).to(dtype=torch.float64, device=device)
+    deg2rad = torch.pi / 180
 
     # Shape of rasters
 
@@ -476,7 +475,7 @@ def anisotropic_sky(
                 # binary temp_sky, making this path consistent with Kside_veg_v2022a.
 
                 KsideD += (
-                    diffsh[:, :, i]
+                    temp_sky #diffsh[:, :, i]
                     * lumChi[i]
                     * angle_of_incidence
                     * steradians[i]
@@ -581,8 +580,21 @@ def anisotropic_sky(
     Lside = Lside_sky + Lside_veg + Lside_sh + Lside_sun + Lside_ref
 
     # Sum of all Lside components (sky, vegetation, sunlit and shaded buildings, reflected)
-
+     
     Ldown = Ldown_sky + Ldown_veg + Ldown_sh + Ldown_sun + Ldown_ref
+
+    if current_step == 72:
+        def _stats(name, x):
+            print(f"{name:10s} min={x.min().item(): .6f}  max={x.max().item(): .6f}  "
+                  f"mean={x.mean().item(): .6f}")
+        print("=== Ldown components (GPU, t=72) ===")
+        _stats("Ldown_sky", Ldown_sky)
+        _stats("Ldown_veg", Ldown_veg)
+        _stats("Ldown_sh", Ldown_sh)
+        _stats("Ldown_sun", Ldown_sun)
+        _stats("Ldown_ref", Ldown_ref)
+        _stats("Ldown", Ldown)
+        print(f"altitude (GPU): {solar_altitude.item()!r}  dtype={solar_altitude.dtype}")
 
     ### Direct radiation ###
 
