@@ -901,7 +901,7 @@ def Solweig_2026a_calc(
         )
         #Lside += Lside_
     else:
-        Lside_ = torch.zeros((rows, cols), device=device)
+        Lside = torch.zeros((rows, cols), device=device)
         L_patches = None
 
     # Box and anisotropic longwave
