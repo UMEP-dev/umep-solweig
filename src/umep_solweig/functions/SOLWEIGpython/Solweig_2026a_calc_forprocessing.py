@@ -874,7 +874,7 @@ def Solweig_2026a_calc(
         )
         #Lside += Lside_
     else:
-        Lside_ = np.zeros((rows, cols))
+        Lside = np.zeros((rows, cols))
         L_patches = None
 
     # Box and anisotropic longwave
