@@ -1,7 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import division
 from math import radians
-import torch
+try:
+    import torch
+except:
+    pass
 
 
 def shade_on_walls(azimuth, aspect, walls, dsm, f, device):

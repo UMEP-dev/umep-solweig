@@ -12,11 +12,8 @@ Main modules:
 
 __version__ = "2026.1.0"
 __author__ = "UMEP Development Team"
-__email__ = "umep@geo.su.se"
+__email__ = "fredrikl@gvc.gu.se"
 __license__ = "GPL-3.0"
-
-# Version info for compatibility checks
-__version_info__ = tuple(map(int, __version__.split(".")[:3]))
 
 # Core imports from main modules
 try:
