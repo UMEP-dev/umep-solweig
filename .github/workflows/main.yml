@@ -13,7 +13,6 @@ permissions:
 
 
 jobs:
-
   test:
     name: Test Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
@@ -26,7 +25,10 @@ jobs:
           - "3.10"
           - "3.11"
           - "3.12"
-          - "3.13"
+
+    defaults:
+      run:
+        shell: bash -el {0}
 
     steps:
       - name: Checkout repository
@@ -34,29 +36,42 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Python ${{ matrix.python-version }}
-        uses: actions/setup-python@v5
+      - name: Set up Miniconda
+        uses: conda-incubator/setup-miniconda@v3
         with:
+          activate-environment: solweig-test
           python-version: ${{ matrix.python-version }}
-          cache: pip
+          channels: conda-forge
+          channel-priority: strict
 
-      - name: Show Python version
-        run: python --version
-
-      - name: Upgrade pip
-        run: python -m pip install --upgrade pip
-
-      - name: Install package and test dependencies
-        run: python -m pip install ".[dev]"
-
-      - name: Show installed versions
+      - name: Install dependencies
         run: |
+          conda install -y \
+            numpy \
+            scipy \
+            pandas \
+            gdal \
+            matplotlib \
+            pytest \
+            pytest-cov
+
+      - name: Install umep-solweig
+        run: |
+          python -m pip install -e . --no-deps
+
+      - name: Show environment
+        run: |
+          python --version
           python -c "import numpy; print('NumPy:', numpy.__version__)"
           python -c "import scipy; print('SciPy:', scipy.__version__)"
           python -c "import pandas; print('pandas:', pandas.__version__)"
+          python -c "import matplotlib; print('matplotlib:', matplotlib.__version__)"
+          python -c "from osgeo import gdal; print('GDAL:', gdal.VersionInfo('--version'))"
+          python -c "import umep_solweig; print('umep_solweig import OK')"
 
       - name: Run tests
-        run: python -m pytest -v
+        run: |
+          python -m pytest -v
 
 
   build:
