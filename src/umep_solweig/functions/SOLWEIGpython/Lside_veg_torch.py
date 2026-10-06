@@ -3,7 +3,6 @@ from .Lvikt_veg_torch import Lvikt_veg
 
 try:
     import torch
-
 except:
     pass
 

@@ -7,7 +7,7 @@ import math
 
 try:
     import torch
-except:
+except ImportError:
     pass
 
 

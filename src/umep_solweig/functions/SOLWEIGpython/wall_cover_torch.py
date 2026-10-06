@@ -1,6 +1,9 @@
 import math
 import numpy as np
-import torch
+try:
+    import torch
+except ImportError:
+    pass
 
 
 def get_wall_cover(voxelTable, lcgrid, dsm, lc_params):

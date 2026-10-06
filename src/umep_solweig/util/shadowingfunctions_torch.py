@@ -5,7 +5,7 @@ from math import radians
 
 try:
     import torch
-except:
+except ImportError:
     pass
 
 # from numba import jit

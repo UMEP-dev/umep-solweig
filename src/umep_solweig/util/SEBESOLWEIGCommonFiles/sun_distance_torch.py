@@ -1,7 +1,7 @@
 __author__ = "xlinfr & Lemap01"
 try:
     import torch
-except:
+except ImportError:
     pass
 
 

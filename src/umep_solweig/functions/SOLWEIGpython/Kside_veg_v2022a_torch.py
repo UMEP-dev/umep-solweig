@@ -5,7 +5,6 @@ from . import sunlit_shaded_patches_torch
 
 try:
     import torch
-
 except:
     pass
 

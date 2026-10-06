@@ -2,11 +2,10 @@ from __future__ import division
 
 try:
     import torch
-    import torch.nn.functional as F
-except:
+    # import torch.nn.functional as F
+except ImportError:
     pass
 author = "xlinfr and Lemap01"
-
 
 def shade_on_walls(azimuth, aspect, walls, dsm, f, shvoveg):
     # wall shadows wall parameterization

@@ -3,7 +3,10 @@ try:
 except:
     pass
 import numpy as np
-import torch
+try:
+    import torch
+except ImportError:
+    pass
 
 
 def _to_tensor(x, device, dtype=torch.float32):

@@ -1,5 +1,8 @@
-import numpy as np
-import torch
+# import numpy as np
+try:
+    import torch
+except ImportError:
+    pass
 
 def shortwave_from_sky(
     sky, angle_of_incidence, lumChi, steradian, patch_azimuth, cyl

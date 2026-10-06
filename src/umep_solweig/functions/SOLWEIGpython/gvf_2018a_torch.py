@@ -1,4 +1,7 @@
-import torch
+try:
+    import torch
+except:
+    pass
 from .sunonsurface_2018a_torch import sunonsurface_2018a
 
 

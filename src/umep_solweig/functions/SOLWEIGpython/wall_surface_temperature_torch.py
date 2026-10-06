@@ -1,7 +1,10 @@
 import math
 import numpy as np
 import pandas as pd
-import torch
+try:
+    import torch
+except ImportError:
+    pass
 from ...functions.SOLWEIGpython.wall_cover import get_wall_cover
 from .cylindric_wedge_torch import cylindric_wedge_voxel
 

@@ -3,7 +3,7 @@ from __future__ import division
 from math import radians
 try:
     import torch
-except:
+except ImportError:
     pass
 
 

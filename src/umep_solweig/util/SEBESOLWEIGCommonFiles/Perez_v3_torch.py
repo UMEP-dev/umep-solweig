@@ -3,7 +3,7 @@ from .create_patches_torch import create_patches
 
 try:
     import torch
-except:
+except ImportError:
     pass
 
 author = "xlinfr and Lemap01"

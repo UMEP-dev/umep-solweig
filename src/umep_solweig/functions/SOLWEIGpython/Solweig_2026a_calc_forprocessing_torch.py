@@ -38,8 +38,7 @@ from copy import deepcopy
 
 try:
     import torch
-
-except:
+except ImportError:
     pass
 
 # Ground surface temperature

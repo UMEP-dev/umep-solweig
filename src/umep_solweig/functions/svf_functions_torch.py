@@ -1,6 +1,6 @@
 try:
     import torch
-except:
+except ImportError:
     pass
 
 from ..util import shadowingfunctions_torch as shadow

@@ -1,6 +1,6 @@
 try:
     import torch
-except:
+except ImportError:
     pass
 
 author = "xlinfr and Lemap01"

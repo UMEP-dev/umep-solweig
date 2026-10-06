@@ -1,4 +1,7 @@
-import torch
+try:
+    import torch
+except:
+    pass
 
 """ Model 1 is based on Unsworth & Monteith, 1975 """
 

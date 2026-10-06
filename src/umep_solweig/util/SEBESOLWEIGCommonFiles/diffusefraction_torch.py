@@ -2,7 +2,7 @@ from __future__ import division
 
 try:
     import torch
-except:
+except ImportError:
     pass
 
 

@@ -1,5 +1,8 @@
 import math
-import torch
+try:
+    import torch
+except ImportError:
+    pass
 
 
 def sunonsurface_2018a(
