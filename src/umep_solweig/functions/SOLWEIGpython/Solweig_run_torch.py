@@ -723,7 +723,7 @@ def solweig_run(configPath, feedback):
                 dsm,
             )
 
-            static = build_static_wall_tensors(voxelTable, device)        
+            static = build_static_wall_tensors(voxelTable, device)
 
             woi_file = configDict["woi_file"]
             if woi_file:
