@@ -1,5 +1,5 @@
 [build-system]
-requires = ["setuptools>=65.0", "wheel"]
+requires = ["setuptools>=65.0", "wheel", "setuptools_scm>=8"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -10,7 +10,7 @@ readme = "README.md"
 requires-python = ">=3.9"
 license = {text = "GPL-3.0-only"}
 authors = [
-    {name = "UMEP Development Team", email = "umep@geo.su.se"}
+    {name = "UMEP Development Team", email = "fredrikl@gvc.gu.se"}
 ]
 keywords = [
     "urban climate",
@@ -44,10 +44,6 @@ dependencies = [
 torch = [
     "torch>=1.10.0",
 ]
-gpu = [
-    "torch>=1.10.0",
-    "cuda-toolkit>=11.2",
-]
 dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
@@ -79,7 +75,7 @@ local_scheme = "no-local-version"
 
 [tool.black]
 line-length = 100
-target-version = ['py38', 'py39', 'py310', 'py311', 'py312']
+target-version = ['py39', 'py310', 'py311', 'py312', 'py313']
 include = '\.pyi?$'
 extend-exclude = '''
 /(
@@ -106,7 +102,7 @@ ensure_newline_before_comments = true
 skip_gitignore = true
 
 [tool.mypy]
-python_version = "3.8"
+python_version = "3.9"
 warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = false
@@ -115,4 +111,4 @@ ignore_missing_imports = true
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
-addopts = "--cov=umep-solweig --cov-report=html --cov-report=term-missing"
+addopts = "--cov=umep_solweig --cov-report=term-missing"

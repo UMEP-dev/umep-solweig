@@ -1,21 +1,68 @@
-name: Publish Python Package
+name: Test and Publish Python Package
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
     tags:
-      - '*'
+      - "*"
   pull_request:
-    branches: "*"
+    branches: [main]
+
+permissions:
+  contents: read
+
 
 jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    
 
-    permissions:
-      id-token: write
-      contents: read
+  test:
+    name: Test Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version:
+          - "3.9"
+          - "3.10"
+          - "3.11"
+          - "3.12"
+          - "3.13"
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+
+      - name: Show Python version
+        run: python --version
+
+      - name: Upgrade pip
+        run: python -m pip install --upgrade pip
+
+      - name: Install package and test dependencies
+        run: python -m pip install ".[dev]"
+
+      - name: Show installed versions
+        run: |
+          python -c "import numpy; print('NumPy:', numpy.__version__)"
+          python -c "import scipy; print('SciPy:', scipy.__version__)"
+          python -c "import pandas; print('pandas:', pandas.__version__)"
+
+      - name: Run tests
+        run: python -m pytest -v
+
+
+  build:
+    name: Build package
+    needs: test
+    runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
@@ -26,36 +73,56 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.12'
+          python-version: "3.12"
 
-      - name: Install dependencies and build package
+      - name: Install build tools
         run: |
-          python -m pip install --upgrade pip setuptools wheel build twine setuptools_scm
-          python -m build
-          ls -la dist/
+          python -m pip install --upgrade pip
+          python -m pip install build twine
 
-      - name: Verify build artifacts
+      - name: Build package
+        run: python -m build
+
+      - name: Check package
         run: |
-          echo "Checking build artifacts..."
-          ls -la dist/
-          echo "Package contents:"
-          tar -tzf dist/*.tar.gz | head -20
+          python -m twine check dist/*
+          ls -lh dist/
 
-      # Publication vers Test PyPI (Déclenché par un push sur main)
-      - name: Publish distribution to Test PyPI
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        uses: pypa/gh-action-pypi-publish@v1.12.4
-        with:
-          packages_dir: dist/
-          verbose: true
-          skip_existing: true
-          repository_url: https://test.pypi.org/legacy/
+      - name: Show generated package version
+        run: |
+          python - <<'PY'
+          from pathlib import Path
 
-      # Publication vers PyPI Officiel (Déclenché par un Tag)
-      - name: Publish distribution to PyPI
-        if: startsWith(github.ref, 'refs/tags')
-        uses: pypa/gh-action-pypi-publish@v1.12.4
+          print("Built files:")
+          for path in Path("dist").iterdir():
+              print(f"  {path.name}")
+          PY
+
+      - name: Upload distribution artifact
+        uses: actions/upload-artifact@v4
         with:
-          packages_dir: dist/
+          name: python-package-distributions
+          path: dist/
+
+
+  publish:
+    name: Publish to PyPI
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: build
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Download distribution
+        uses: actions/download-artifact@v4
+        with:
+          name: python-package-distributions
+          path: dist/
+
+      - name: Publish to PyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
           verbose: true
-          skip_existing: true
