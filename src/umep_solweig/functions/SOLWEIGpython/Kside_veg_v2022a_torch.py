@@ -5,8 +5,8 @@ from . import sunlit_shaded_patches_torch
 
 try:
     import torch
-except:
-    pass
+except ImportError:
+    torch = None
 
 
 def Kside_veg_v2022a(

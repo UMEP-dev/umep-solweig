@@ -1,7 +1,7 @@
 try:
     import torch
 except ImportError:
-    pass
+    torch = None
 
 from ..util import shadowingfunctions_torch as shadow
 from ..util.SEBESOLWEIGCommonFiles.create_patches_torch import create_patches

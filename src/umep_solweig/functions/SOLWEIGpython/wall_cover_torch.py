@@ -3,7 +3,7 @@ import numpy as np
 try:
     import torch
 except ImportError:
-    pass
+    torch = None
 
 
 def get_wall_cover(voxelTable, lcgrid, dsm, lc_params):

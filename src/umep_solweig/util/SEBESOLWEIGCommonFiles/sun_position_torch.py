@@ -5,7 +5,7 @@ from __future__ import print_function
 try:
     import torch
 except ImportError:
-    pass
+    torch = None
 
 
 def sun_position(time, location):

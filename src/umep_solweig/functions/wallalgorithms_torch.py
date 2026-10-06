@@ -9,7 +9,7 @@ try:
     import torch
     import torch.nn.functional as F
 except:
-    pass
+    torch = None
 
 # import scipy.misc as sc
 import scipy.ndimage as sc

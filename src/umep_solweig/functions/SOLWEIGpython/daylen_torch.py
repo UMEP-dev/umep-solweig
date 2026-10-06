@@ -1,7 +1,7 @@
 try:
     import torch
-except:
-    pass
+except ImportError:
+    torch = None
 
 
 def daylen(DOY, XLAT):

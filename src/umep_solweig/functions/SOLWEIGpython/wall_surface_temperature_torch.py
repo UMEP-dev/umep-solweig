@@ -4,7 +4,7 @@ import pandas as pd
 try:
     import torch
 except ImportError:
-    pass
+    torch = None
 from ...functions.SOLWEIGpython.wall_cover import get_wall_cover
 from .cylindric_wedge_torch import cylindric_wedge_voxel
 

@@ -3,7 +3,7 @@ from __future__ import division
 try:
     import torch
 except ImportError:
-    pass
+    torch = None
 
 
 def diffusefraction(radG, altitude, Kt, Ta, RH):

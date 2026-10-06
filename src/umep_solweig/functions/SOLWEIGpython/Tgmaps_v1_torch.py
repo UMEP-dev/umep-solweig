@@ -1,7 +1,7 @@
 try:
     import torch
 except ImportError:
-    pass
+    torch = None
 
 
 def Tgmaps_v1(lc_grid, solweig_parameters):

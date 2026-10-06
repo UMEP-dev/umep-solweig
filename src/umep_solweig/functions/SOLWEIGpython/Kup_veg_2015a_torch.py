@@ -1,8 +1,7 @@
 try:
     import torch
-except:
-    pass
-
+except ImportError:
+    torch = None
 
 def Kup_veg_2015a(
     radI,

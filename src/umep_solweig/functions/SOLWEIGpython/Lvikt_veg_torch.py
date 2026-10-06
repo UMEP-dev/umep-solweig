@@ -1,7 +1,7 @@
 try:
     import torch
-except:
-    pass
+except ImportError:
+    torch = None
 
 
 def Lvikt_veg(svf, svfveg, svfaveg, vikttot):

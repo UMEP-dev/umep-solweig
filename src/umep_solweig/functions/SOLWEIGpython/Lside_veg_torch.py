@@ -3,8 +3,8 @@ from .Lvikt_veg_torch import Lvikt_veg
 
 try:
     import torch
-except:
-    pass
+except ImportError:
+    torch = None
 
 
 def Lside_veg_v2022a(

@@ -2,7 +2,7 @@ import math
 try:
     import torch
 except ImportError:
-    pass
+    torch = None
 
 
 def sunonsurface_2018a(

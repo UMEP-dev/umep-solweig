@@ -8,7 +8,7 @@ import math
 try:
     import torch
 except ImportError:
-    pass
+    torch = None
 
 
 def clearnessindex_2013b(zen, jday, Ta, RH, radG, location, P):

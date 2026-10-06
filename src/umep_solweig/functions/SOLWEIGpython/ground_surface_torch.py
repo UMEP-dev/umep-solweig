@@ -6,8 +6,8 @@ import math
 
 try:
     import torch
-except:
-    pass
+except ImportError:
+    torch = None
 # Stefan-Boltzmann s constant
 SBC = 5.67e-8
 

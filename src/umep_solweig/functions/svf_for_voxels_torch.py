@@ -6,7 +6,7 @@ import numpy as np
 try:
     import torch
 except ImportError:
-    pass
+    torch = None
 
 
 def _to_tensor(x, device, dtype=torch.float32):

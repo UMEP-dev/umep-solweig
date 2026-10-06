@@ -4,7 +4,7 @@ from .create_patches_torch import create_patches
 try:
     import torch
 except ImportError:
-    pass
+    torch = None
 
 author = "xlinfr and Lemap01"
 

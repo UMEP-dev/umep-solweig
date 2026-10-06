@@ -1,7 +1,7 @@
 try:
     import torch
 except ImportError:
-    pass
+    torch = None
 
 """ This function calculates whether a point is sunlit or shaded
     based on a sky view factor (in a cylinder), solar altitude, solar azimuth """

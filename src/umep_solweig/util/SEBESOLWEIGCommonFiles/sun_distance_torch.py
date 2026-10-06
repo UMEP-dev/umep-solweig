@@ -2,7 +2,7 @@ __author__ = "xlinfr & Lemap01"
 try:
     import torch
 except ImportError:
-    pass
+    torch = None
 
 
 def sun_distance(jday):

@@ -1,7 +1,7 @@
 try:
     import torch
-except:
-    pass
+except ImportError:
+    torch = None
 
 """ Model 1 is based on Unsworth & Monteith, 1975 """
 

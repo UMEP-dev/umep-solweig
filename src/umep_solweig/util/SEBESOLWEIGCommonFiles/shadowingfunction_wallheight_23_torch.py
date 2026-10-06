@@ -2,9 +2,8 @@ from __future__ import division
 
 try:
     import torch
-    # import torch.nn.functional as F
 except ImportError:
-    pass
+    torch = None
 author = "xlinfr and Lemap01"
 
 def shade_on_walls(azimuth, aspect, walls, dsm, f, shvoveg):

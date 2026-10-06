@@ -4,7 +4,7 @@ from math import radians
 try:
     import torch
 except ImportError:
-    pass
+    torch = None
 
 
 def shade_on_walls(azimuth, aspect, walls, dsm, f, device):

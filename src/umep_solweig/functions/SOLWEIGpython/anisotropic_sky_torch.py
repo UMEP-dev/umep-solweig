@@ -2,8 +2,8 @@ import numpy as np
 
 try:
     import torch
-except:
-    pass
+except ImportError:
+    torch = None
 
 
 from copy import deepcopy

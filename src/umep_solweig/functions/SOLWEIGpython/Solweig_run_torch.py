@@ -11,7 +11,7 @@ from __future__ import absolute_import
 try:
     import torch
 except ImportError:
-    pass
+    torch = None
 
 import numpy as np
 from ...util.umep_solweig_export_component import read_solweig_config

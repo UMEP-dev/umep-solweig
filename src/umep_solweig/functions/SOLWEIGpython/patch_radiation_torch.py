@@ -2,7 +2,7 @@
 try:
     import torch
 except ImportError:
-    pass
+    torch = None
 
 def shortwave_from_sky(
     sky, angle_of_incidence, lumChi, steradian, patch_azimuth, cyl
