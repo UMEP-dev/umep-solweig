@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "umep-solweig"
-version = "2026.1.0"
+version = "2026.0.1"
 description = "SOLWEIG algorithm implementation for urban thermal and radiation simulation"
 readme = "README.md"
 requires-python = ">=3.8"
