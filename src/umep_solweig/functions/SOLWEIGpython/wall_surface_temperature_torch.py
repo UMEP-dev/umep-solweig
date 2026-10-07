@@ -226,12 +226,13 @@ def surface_temperature_calc(effusivity, t, Kin, Lin, Ta, wall_emissivity, Ts_pr
 
     return Ts, dT
 
+
 def build_static_wall_tensors(voxelTable, device, dtype=None):
     """Call ONCE, immediately after load_walls - not per-timestep. Bundles
     every per-voxel column that never changes across the run into tensors
     resident on `device`, so wall_surface_temperature stops re-uploading
     the same unchanging data from CPU on every single call."""
-    
+
     if torch is None:
         raise ImportError(
             "PyTorch is required for GPU functionality."
@@ -239,7 +240,7 @@ def build_static_wall_tensors(voxelTable, device, dtype=None):
 
     if dtype is None:
         dtype = torch.float32
-        
+
     def _col(name):
         return torch.tensor(voxelTable[name].to_numpy(), device=device, dtype=dtype)
 
@@ -306,7 +307,14 @@ def wall_surface_temperature(
     Ldown_array = Ldown[ypos_idx, xpos_idx]
     Lup_array = Lup[ypos_idx, xpos_idx]
 
-    def _col(name, dtype=torch.float32):
+    def _col(name, dtype=None):
+        if torch is None:
+            raise ImportError(
+                "PyTorch is required for GPU functionality."
+            )
+
+        if dtype is None:
+            dtype = torch.float32
         return torch.tensor(voxelTable[name].to_numpy(), device=device, dtype=dtype)
 
     svfalfa = static["svfalfa"]

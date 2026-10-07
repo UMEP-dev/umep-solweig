@@ -7,7 +7,15 @@ from ..util import shadowingfunctions_torch as shadow
 from ..util.SEBESOLWEIGCommonFiles.create_patches_torch import create_patches
 
 
-def _to_tensor(x, device, dtype=torch.float32):
+def _to_tensor(x, device, dtype=None):
+    if torch is None:
+        raise ImportError(
+            "PyTorch is required for GPU functionality."
+        )
+
+    if dtype is None:
+        dtype = torch.float32
+
     if isinstance(x, torch.Tensor):
         return x.to(device)
     if x is None:
