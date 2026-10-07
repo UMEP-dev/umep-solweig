@@ -24,7 +24,7 @@ def _to_tensor(x, device, dtype=None):
 
 
 # from ..functions.wallalgorithms import findwalls
-from . import wallalgorithms_torch as wa
+# from . import wallalgorithms_torch as wa
 from . import svf_for_voxels_torch as svfv
 from ..util.SEBESOLWEIGCommonFiles import (
     shadowingfunction_wallheight_13_torch as shb,
@@ -34,9 +34,9 @@ from ..util.SEBESOLWEIGCommonFiles import (
 )
 
 # remove
-from ..util.misc import saveraster
-from osgeo.gdalconst import *
-from osgeo import gdal, osr
+# from ..util.misc import saveraster
+# from osgeo.gdalconst import *
+# from osgeo import gdal, osr
 
 
 def annulus_weight(altitude, aziinterval, device):
