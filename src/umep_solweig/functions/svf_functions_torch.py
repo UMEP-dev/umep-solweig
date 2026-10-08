@@ -146,8 +146,12 @@ def svfForProcessing153(
     wallScheme,
     demlayer,
     feedback,
-    device=torch.device("cpu"),
+    device=None,
 ):
+    if torch is None:
+        raise ImportError("PyTorch is required")
+    if device is None:
+        device = torch.device("cpu")
 
     with torch.no_grad():
 

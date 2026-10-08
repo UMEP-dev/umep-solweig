@@ -1,12 +1,14 @@
-try:
-    from sklearn.cluster import KMeans
-except:
-    pass
+# try:
+#     from sklearn.cluster import KMeans
+# except:
+#     pass
 import numpy as np
 try:
     import torch
 except ImportError:
     torch = None
+from . import svf_functions_torch as svf
+from . import wallalgorithms_torch as wa
 
 
 def _to_tensor(x, device, dtype=None):
@@ -25,13 +27,12 @@ def _to_tensor(x, device, dtype=None):
     return torch.tensor(x, dtype=dtype, device=device)
 
 
-from . import svf_functions_torch as svf
-from . import wallalgorithms_torch as wa
+def wallscheme_prepare(dsm, scale, pixel_resolution, feedback, device=None):
+    if torch is None:
+        raise ImportError("PyTorch is required")
+    if device is None:
+        device = torch.device("cpu")
 
-
-def wallscheme_prepare(
-    dsm, scale, pixel_resolution, feedback, device=torch.device("cpu")
-):
     dsm = _to_tensor(dsm, device)
 
     # Existing UMEP wall and aspect calculations
@@ -164,8 +165,12 @@ def svf_for_voxels(
     svfaveg_array,
     svf_height_array,
     feedback,
-    device=torch.device("cpu"),
+    device=None,
 ):
+    if torch is None:
+        raise ImportError("PyTorch is required")
+    if device is None:
+        device = torch.device("cpu")
     """This function calculates sky view factor at all voxel levels"""
     with torch.no_grad():
         dsm = _to_tensor(dsm, device)
@@ -317,8 +322,12 @@ def svf_kmeans(
     svfaveg_array,
     svf_height_array,
     feedback,
-    device=torch.device("cpu"),
+    device=None,
 ):
+    if torch is None:
+        raise ImportError("PyTorch is required")
+    if device is None:
+        device = torch.device("cpu")
     try:
         from sklearn.cluster import KMeans
     except:
