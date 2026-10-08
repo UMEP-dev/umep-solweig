@@ -48,6 +48,7 @@ dev = [
     "pytest>=7.0",
     "pytest-cov>=4.0",
     "matplotlib",
+    "psutil>=5.9",
     "black>=23.0",
     "flake8>=5.0",
     "mypy>=1.0",
