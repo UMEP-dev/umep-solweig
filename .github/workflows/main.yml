@@ -51,6 +51,7 @@ jobs:
             scipy \
             pandas \
             gdal \
+            psutil \
             matplotlib \
             pytest \
             pytest-cov
