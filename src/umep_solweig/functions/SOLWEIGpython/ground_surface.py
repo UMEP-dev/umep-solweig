@@ -258,7 +258,7 @@ def surfaceTemperature_calc(
     :diff: thermal diffusivity grid of the material
     :lc_grid: landcover grid to identify the water bodies
     :a: coefficient grids related to the OHM
-    :timestep: the timestep between 2 iteration of the simulation in min
+    :timestep: the timestep between 2 iteration of the simulation in s
 
     :Return:
     :Tg: Surface temperature
@@ -268,7 +268,7 @@ def surfaceTemperature_calc(
     """
 
     # Store the past ground surface temperature
-    Tg_stored = Tg
+    Tg_stored = Tg.copy()
 
     # Damping depths of the daily surface temperature wave
     D = np.sqrt((2 * diff) / (2 * math.pi / 86400))
@@ -394,7 +394,7 @@ def outgoingLongwave_calc(
     alb_wall = 0.2
 
     # Copy of the sunlit wall grid and replacement of the wall height with 1 if sunlit
-    sunlitwall = sunwall
+    sunlitwall = sunwall.copy()
     sunlitwall[sunlitwall > 0] = 1
 
     # Boolean array 1 if the pixel is a wall, 0 if not
