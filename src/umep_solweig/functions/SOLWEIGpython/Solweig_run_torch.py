@@ -367,10 +367,6 @@ def solweig_run(configPath, feedback):
             )
             # poiname = []
             poi_field = configDict["poi_field"]
-
-            poi_field = configDict[
-                "woi_field"
-            ]  # self.parameterAsStrings(parameters, self.WOI_FIELD, context)
             poisxy, poiname = pointOfInterest(
                 configDict["poi_file"], poi_field, scale, gdal_dsm
             )

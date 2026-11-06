@@ -62,68 +62,45 @@ def load_walls(
     tmp[tmp < 0.0] = 0.0
     voxelTable["svfalfa"] = np.arcsin(np.exp((np.log((1.0 - tmp)) / 2.0)))
 
-    temp_table = np.column_stack(
-        [
-            voxelTable["wallId"].to_numpy(),
-            voxelTable["ypos"].to_numpy(),
-            voxelTable["xpos"].to_numpy(),
-        ]
+    wallaspect_np = (
+        wallaspect.cpu().numpy()
+        if (torch is not None and torch.is_tensor(wallaspect))
+        else np.asarray(wallaspect)
     )
-    temp_table = np.unique(temp_table, axis=0)
+    albedo_grid_np = (
+        albedo_grid.cpu().numpy()
+        if (torch is not None and torch.is_tensor(albedo_grid))
+        else np.asarray(albedo_grid)
+    )
+    dsm_np = (
+        dsm.cpu().numpy()
+        if (torch is not None and torch.is_tensor(dsm))
+        else np.asarray(dsm)
+    )
 
-    for i in np.arange(temp_table.shape[0]):
-        y = int(temp_table[i, 1])
-        x = int(temp_table[i, 2])
-        # indexing a torch raster with plain ints returns a 0-d VIEW tensor -
-        # .item() unwraps it to a plain float before it goes anywhere near
-        # the DataFrame, same pattern as everywhere else in this port
-        temp_aspect = wallaspect[y, x].item()
-        voxelTable.loc[
-            voxelTable["wallId"] == temp_table[i, 0], "wallAspect"
-        ] = temp_aspect
+    y_idx = voxelTable["ypos"].to_numpy().astype(int)
+    x_idx = voxelTable["xpos"].to_numpy().astype(int)
+    voxelTable["wallAspect"] = wallaspect_np[y_idx, x_idx]
+    voxelTable["groundAlbedo"] = albedo_grid_np[y_idx, x_idx]
+    voxelTable["voxelHeightMasl"] = (
+        voxelTable["voxelHeight"].to_numpy() + dsm_np[y_idx, x_idx]
+    )
 
-        temp_building = (
-            voxelTable.loc[
-                (
-                    (voxelTable["wallId"] == temp_table[i, 0])
-                    & (voxelTable["voxelHeight"] == voxelTable["voxelHeight"].min())
-                ),
-                "svfbu",
-            ]
-            .copy()
-            .to_numpy()[0]
-        )
-        temp_veg = (
-            voxelTable.loc[
-                (
-                    (voxelTable["wallId"] == temp_table[i, 0])
-                    & (voxelTable["voxelHeight"] == voxelTable["voxelHeight"].min())
-                ),
-                "svfaveg",
-            ]
-            .copy()
-            .to_numpy()[0]
-        )
-        temp_albedo = albedo_grid[y, x].item()
-        temp_dsm = dsm[y, x].item()
-
+    min_height = voxelTable["voxelHeight"].min()
+    ground_rows = (
         voxelTable.loc[
-            voxelTable["wallId"] == temp_table[i, 0], "svfbu_at_ground"
-        ] = temp_building
-        voxelTable.loc[
-            voxelTable["wallId"] == temp_table[i, 0], "svfaveg_at_ground"
-        ] = temp_veg
-        voxelTable.loc[
-            voxelTable["wallId"] == temp_table[i, 0], "groundAlbedo"
-        ] = temp_albedo
-        voxelTable.loc[
-            voxelTable["wallId"] == temp_table[i, 0], "voxelHeightMasl"
-        ] = (
-            voxelTable.loc[
-                voxelTable["wallId"] == temp_table[i, 0], "voxelHeight"
-            ].to_numpy()
-            + temp_dsm
-        )
+            voxelTable["voxelHeight"] == min_height,
+            ["wallId", "svfbu", "svfaveg"],
+        ]
+        .drop_duplicates(subset="wallId", keep="first")
+        .set_index("wallId")
+    )
+    voxelTable["svfbu_at_ground"] = (
+        voxelTable["wallId"].map(ground_rows["svfbu"]).to_numpy()
+    )
+    voxelTable["svfaveg_at_ground"] = (
+        voxelTable["wallId"].map(ground_rows["svfaveg"]).to_numpy()
+    )
 
     voxelTable = voxelTable.set_index("voxelId")
 

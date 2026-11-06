@@ -259,9 +259,7 @@ def Solweig_2026a_calc(
                 zenDeg, azimuth, radD, radI, jday, patchchoice, patch_option
             )
             # Total relative luminance from sky, i.e. from each patch, into each cell
-            aniLum = np.zeros((rows, cols))
-            for idx in range(lv.shape[0]):
-                aniLum += diffsh[:, :, idx] * lv[idx, 2]
+            aniLum = diffsh @ lv[:, 2]
 
             dRad = (
                 aniLum * radD

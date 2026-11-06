@@ -41,12 +41,12 @@ def sunonsurface_2018a(
     # loop parameters
     index = 0
     f = buildings
+    if landcover == 1:
+        Tg[lc_grid == 7] = Twater - Ta
     Lup = (
         SBC * emis_grid * (Tg * shadow + Ta + 273.15) ** 4
         - SBC * emis_grid * (Ta + 273.15) ** 4
     )
-    if landcover == 1:
-        Tg[lc_grid == 3] = Twater - Ta
 
     Lwall = (
         SBC * ewall * (Tgwall + Ta + 273.15) ** 4
