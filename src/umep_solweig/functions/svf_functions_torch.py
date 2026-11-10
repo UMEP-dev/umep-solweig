@@ -371,6 +371,11 @@ def svfForProcessing153(
                         sh = shadow.shadowingfunctionglobalradiation(
                             dsm, azimuth, altitude, scale, feedback, 1, device
                         )
+                        # No vegetation: nothing is blocked by it, as in the
+                        # wall-scheme branch above. Zeros would make the
+                        # anisotropic sky treat every patch as vegetation.
+                        vegshmat[:, :, index] = 1.0
+                        vbshvegshmat[:, :, index] = 1.0
 
                 shmat[:, :, index] = sh
 
