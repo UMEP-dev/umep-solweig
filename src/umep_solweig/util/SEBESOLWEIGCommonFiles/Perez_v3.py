@@ -172,10 +172,14 @@ def Perez_v3(zen, azimuth, radD, radI, jday, patchchoice, patch_option):
     Idh = radD
     Ibn = radI
 
-    # Skyclearness
-    PerezClearness = ((Idh + Ibn) / (Idh + 1.041 * np.power(zen, 3))) / (
-        1 + 1.041 * np.power(zen, 3)
-    )
+    # Skyclearness (Perez et al. 1993): 1 for an overcast sky at any zenith
+    if Idh > 0:
+        PerezClearness = ((Idh + Ibn) / Idh + 1.041 * np.power(zen, 3)) / (
+            1 + 1.041 * np.power(zen, 3)
+        )
+    else:
+        # No diffuse radiation: the ratio is unbounded, i.e. the clearest bin
+        PerezClearness = np.inf
     # Extra terrestrial radiation
     day_angle = jday * 2 * np.pi / 365
     I0 = 1367 * (
@@ -188,16 +192,19 @@ def Perez_v3(zen, azimuth, radD, radI, jday, patchchoice, patch_option):
         + 0.000077 * np.sin(2 * day_angle)
     )
 
-    # Optical air mass
+    # Optical air mass (Kasten and Young 1989 below 10 degrees)
     if altitude >= 10 * deg2rad:
         AirMass = 1 / np.sin(altitude)
     elif altitude < 0:  # below equation becomes complex
-        AirMass = 1 / np.sin(altitude) + 0.50572 * np.power(
-            180 * complex(altitude) / np.pi + 6.07995, -1.6364
+        AirMass = 1 / (
+            np.sin(altitude)
+            + 0.50572
+            * np.power(180 * complex(altitude) / np.pi + 6.07995, -1.6364)
         )
     else:
-        AirMass = 1 / np.sin(altitude) + 0.50572 * np.power(
-            180 * altitude / np.pi + 6.07995, -1.6364
+        AirMass = 1 / (
+            np.sin(altitude)
+            + 0.50572 * np.power(180 * altitude / np.pi + 6.07995, -1.6364)
         )
 
     # Skybrightness
@@ -205,22 +212,22 @@ def Perez_v3(zen, azimuth, radD, radI, jday, patchchoice, patch_option):
     if Idh <= 10:
         PerezBrightness = 0
 
-    # sky clearness bins
+    # sky clearness bins (every value, bin edges included, falls in one bin)
     if PerezClearness < 1.065:
         intClearness = 0
-    if PerezClearness > 1.065 and PerezClearness < 1.230:
+    elif PerezClearness < 1.230:
         intClearness = 1
-    if PerezClearness > 1.230 and PerezClearness < 1.500:
+    elif PerezClearness < 1.500:
         intClearness = 2
-    if PerezClearness > 1.500 and PerezClearness < 1.950:
+    elif PerezClearness < 1.950:
         intClearness = 3
-    if PerezClearness > 1.950 and PerezClearness < 2.800:
+    elif PerezClearness < 2.800:
         intClearness = 4
-    if PerezClearness > 2.800 and PerezClearness < 4.500:
+    elif PerezClearness < 4.500:
         intClearness = 5
-    if PerezClearness > 4.500 and PerezClearness < 6.200:
+    elif PerezClearness < 6.200:
         intClearness = 6
-    if PerezClearness > 6.200:
+    else:
         intClearness = 7
 
     m_a = (
