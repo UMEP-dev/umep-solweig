@@ -43,7 +43,9 @@ class ResourceMonitor(threading.Thread):
     """Background thread to sample CPU, RAM, GPU, and VRAM."""
 
     def __init__(self, interval=0.1):
-        super().__init__()
+        # Daemon thread: if a run raises before stop() is reached, the
+        # sampler must not keep the Python process alive after pytest ends.
+        super().__init__(daemon=True)
         self.interval = interval
         self._stop_event = threading.Event()
         self.cpu_samples = []
@@ -108,7 +110,11 @@ class ResourceMonitor(threading.Thread):
 # ==========================================
 # AUTOMATED TEST CASE
 # ==========================================
+@pytest.mark.benchmark
 def test_solweig_src_files_benchmark():
+    # The benchmark compares the numpy and the torch runs, so it needs both.
+    pytest.importorskip("torch")
+
     # Ensure dependencies and inputs exist
     if psutil is None:
         pytest.fail("Missing required dependency: psutil")
@@ -124,25 +130,27 @@ def test_solweig_src_files_benchmark():
     monitor_cpu = ResourceMonitor(interval=0.1)
     monitor_cpu.start()
 
-    for _ in range(iterations):
-        start_time = time.time()
-        mod_cpu.solweig_run(str(CONFIG_PATH), None)
-        cpu_results.append(time.time() - start_time)
-
-    monitor_cpu.stop()
-    monitor_cpu.join()
+    try:
+        for _ in range(iterations):
+            start_time = time.time()
+            mod_cpu.solweig_run(str(CONFIG_PATH), None)
+            cpu_results.append(time.time() - start_time)
+    finally:
+        monitor_cpu.stop()
+        monitor_cpu.join()
 
     # 2. --- GPU Mode Run ---
     monitor_gpu = ResourceMonitor(interval=0.1)
     monitor_gpu.start()
 
-    for _ in range(iterations):
-        start_time = time.time()
-        mod_gpu.solweig_run(str(CONFIG_PATH), None)
-        gpu_results.append(time.time() - start_time)
-
-    monitor_gpu.stop()
-    monitor_gpu.join()
+    try:
+        for _ in range(iterations):
+            start_time = time.time()
+            mod_gpu.solweig_run(str(CONFIG_PATH), None)
+            gpu_results.append(time.time() - start_time)
+    finally:
+        monitor_gpu.stop()
+        monitor_gpu.join()
 
     # 3. --- Calculations & Basic Verification Asserts ---
     assert len(cpu_results) == iterations
