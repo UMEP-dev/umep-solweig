@@ -399,18 +399,17 @@ def Solweig_2026a_calc(
                 / 2
             )  # 2015 a, based on max sun altitude
 
-            Tgdiff = Tgdiff * CI_TgG  # new estimation
-
-            # For Tg output in POIs
-            # TgTemp = Tgdiff * shadow + Ta
-            # _, timeadd, Tg = TsWaveDelay_2015a(
-            #     TgTemp, firstdaytime, timeadd, timestepdec, Tg
-            # )  # timeadd only here v2021a
-
+            Tgdiff = Tgdiff * CI_TgG  # new estimation            
             if landcover == 1:
-                Tg[Tg < 0] = (
+                Tgdiff[Tgdiff < 0] = (
                     0  # temporary for removing low Tg during morning 20130205
                 )
+
+            # For Tg output in POIs
+            TgTemp = Tgdiff * shadow + Ta
+            _, timeadd, Tg = TsWaveDelay_2015a(
+                TgTemp, firstdaytime, timeadd, timestepdec, Tg
+            )  # timeadd only here v2021a
 
         # Calculate the outgoing longwave radiation
         if outgoingLW == 1:
@@ -513,12 +512,6 @@ def Solweig_2026a_calc(
             LupN, timeaddnotused, Tgmap1N = TsWaveDelay_2015a(
                 gvfLupN, firstdaytime, timeadd, timestepdec, Tgmap1N
             )
-
-            # For Tg output in POIs
-            TgTemp = Tgdiff * shadow + Ta
-            _, timeadd, Tg = TsWaveDelay_2015a(
-                TgTemp, firstdaytime, timeadd, timestepdec, Tgdiff
-            )  # timeadd only here v2021a
 
         # # # # Kup # # # #
         Kup, KupE, KupS, KupW, KupN = Kup_veg_2015a(
