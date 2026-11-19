@@ -433,6 +433,11 @@ def solweig_run(configPath, feedback):
                 )  # changes in psi not implemented yet
         else:
             diffsh = shmat
+            # Without vegetation no patch is blocked by it. Shadow matrix
+            # files written before this convention hold zeros here, which
+            # would send every patch to the vegetation emitter.
+            vegshmat = np.ones_like(shmat)
+            vbshvegshmat = np.ones_like(shmat)
 
         # Estimate number of patches based on shadow matrices
         if shmat.shape[2] == 145:
