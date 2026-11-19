@@ -10,7 +10,7 @@ import pytest
 from umep_solweig.functions.SOLWEIGpython.Tgmaps_v1 import Tgmaps_v1
 
 PARAMS = json.loads(
-    (Path(__file__).parent / "tests_data" / "solweig_parameters.json").read_text()
+    (Path(__file__).parent / "tests_data" / "parametersforsolweig.json").read_text()
 )
 NAMES = PARAMS["Names"]["Value"]
 
