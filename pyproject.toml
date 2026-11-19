@@ -114,3 +114,6 @@ ignore_missing_imports = true
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "--cov=umep_solweig --cov-report=term-missing"
+markers = [
+    "benchmark: timing comparison of the numpy and torch runs; needs torch, not run in CI",
+]

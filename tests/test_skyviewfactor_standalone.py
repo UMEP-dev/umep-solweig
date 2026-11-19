@@ -1,3 +1,4 @@
+from contextlib import nullcontext
 from pathlib import Path
 from unittest.mock import MagicMock, patch
 import pytest
@@ -38,8 +39,18 @@ def setup_and_teardown(test_paths):
 @pytest.mark.parametrize("use_gpu", [False, True])
 def test_process_algorithm_standard_and_wall_scheme(test_paths, use_gpu):
     """Tests the function with standard parameters and wallScheme enabled on both CPU and GPU."""
-    # Patch torch.cuda.is_available to match our current parametrization matrix
-    with patch("torch.cuda.is_available", return_value=use_gpu):
+    # Patch torch.cuda.is_available to match our current parametrization matrix.
+    # Without torch the numpy case still runs and the torch case is skipped.
+    try:
+        import torch  # noqa: F401
+
+        cuda = patch("torch.cuda.is_available", return_value=use_gpu)
+    except ImportError:
+        if use_gpu:
+            pytest.skip("torch is not installed")
+        cuda = nullcontext()
+
+    with cuda:
         result = processAlgorithm(
             input_dsm=test_paths["data_dir"] / "dsm.tif",
             input_cdsm=test_paths["data_dir"] / "cdsm.tif",

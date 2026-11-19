@@ -16,6 +16,7 @@ jobs:
   test:
     name: Test Python ${{ matrix.python-version }}
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     strategy:
       fail-fast: false
@@ -50,6 +51,7 @@ jobs:
             numpy \
             scipy \
             pandas \
+            scikit-learn \
             gdal \
             psutil \
             matplotlib \
@@ -72,7 +74,7 @@ jobs:
 
       - name: Run tests
         run: |
-          python -m pytest -v
+          python -m pytest -v -m "not benchmark"
 
 
   build:

@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 __author__ = "xlinfr"
 
 from pathlib import Path
