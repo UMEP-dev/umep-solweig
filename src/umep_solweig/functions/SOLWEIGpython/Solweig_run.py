@@ -480,7 +480,7 @@ def solweig_run(configPath, feedback):
         ] = Tgmaps_v1(lcgrid.copy(), param)
     else:
         TgK = Knight + param["Ts_deg"]["Value"]["Cobble_stone_2014a"]
-        Tstart = Knight - param["Tstart"]["Value"]["Cobble_stone_2014a"]
+        Tstart = Knight + param["Tstart"]["Value"]["Cobble_stone_2014a"]
         TmaxLST = param["TmaxLST"]["Value"]["Cobble_stone_2014a"]
         alb_grid = (
             Knight
