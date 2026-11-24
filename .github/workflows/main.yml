@@ -28,6 +28,11 @@ jobs:
           - "3.12"
           - "3.13"
           - "3.14"
+        # The Python 3.12 job follows the OSGeo4W build (Python 3.12, GDAL 3.13).
+        # Move the pin when OSGeo4W moves to a new GDAL series.
+        include:
+          - python-version: "3.12"
+            gdal-spec: "gdal=3.13"
 
     defaults:
       run:
@@ -54,7 +59,7 @@ jobs:
             scipy \
             pandas \
             scikit-learn \
-            gdal \
+            "${{ matrix.gdal-spec || 'gdal' }}" \
             psutil \
             matplotlib \
             pytest \
