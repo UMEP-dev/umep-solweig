@@ -110,7 +110,7 @@ def write_solweig_config(configDict, refdir):
     f.write(
         "# use the outgoing longwave radiation computation scheme v2026a\n"
     )
-    f.write("outgoinglongwave={}\n".format(configDict["outgoingLW"]))
+    f.write("outgoinglongwave={}\n".format(configDict["outgoinglongwave"]))
     f.write(
         "# use wall surface temperature scheme (Wallenberg et al. 2025, GMD)\n"
     )
